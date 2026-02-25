@@ -21,7 +21,6 @@ const Navbar = () => {
         <Link to="/progress">Progress</Link>
         <Link to="/ai-assistant">AI Assistant</Link>
       </div>
-<<<<<<< HEAD
       <div className="navbar-actions">
         <SignedOut>
           <SignInButton mode="modal">
