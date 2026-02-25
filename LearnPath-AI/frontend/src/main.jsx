@@ -1,18 +1,23 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App.jsx'
-import { AuthProvider } from './context/AuthContext';
 import './index.css'
+import { ClerkProvider } from '@clerk/clerk-react'
+import { dark } from "@clerk/themes";
 
-const CLIENT_ID = "952084918159-usvbj1cfeu0i9hpvkvhgepefavjs3fif.apps.googleusercontent.com";
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
+if (!PUBLISHABLE_KEY) {
+  throw new Error('Add your Clerk Publishable Key to the .env file')
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId={CLIENT_ID}>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </GoogleOAuthProvider>
+     <ClerkProvider publishableKey={PUBLISHABLE_KEY}
+      appearance={{
+         baseTheme: dark,
+    }}>
+      <App />
+    </ClerkProvider>
   </React.StrictMode>,
 )
