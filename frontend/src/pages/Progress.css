@@ -1,0 +1,132 @@
+/* ===== Stat Cards ===== */
+.prog-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.prog-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 1.2rem 1.5rem;
+  transition: border-color 0.2s;
+}
+
+.prog-stat-card:hover {
+  border-color: rgba(255,255,255,0.15);
+}
+
+.prog-stat-icon {
+  font-size: 1.8rem;
+}
+
+.prog-stat-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 0.2rem;
+}
+
+.prog-stat-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* ===== Chart Cards ===== */
+.prog-chart-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.prog-chart-title {
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 1.2rem;
+}
+
+.prog-row {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.prog-row .prog-chart-card {
+  min-width: 280px;
+  margin-bottom: 0;
+}
+
+/* ===== Custom Tooltip ===== */
+.chart-tooltip {
+  background: #1a1a2e;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+}
+
+.tooltip-label {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  margin: 0 0 0.2rem;
+}
+
+.tooltip-val {
+  color: #a78bfa;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* ===== Category Breakdown ===== */
+.prog-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding-top: 0.25rem;
+}
+
+.prog-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.prog-cat-name {
+  color: #d1d5db;
+  font-size: 0.88rem;
+  font-weight: 500;
+  width: 64px;
+  flex-shrink: 0;
+}
+
+.prog-cat-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.prog-cat-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.prog-cat-count {
+  color: #9ca3af;
+  font-size: 0.82rem;
+  font-weight: 600;
+  width: 24px;
+  text-align: right;
+  flex-shrink: 0;
+}
