@@ -33,3 +33,6 @@ Thumbs.db
 
 # Package manager locks (keep only one)
 yarn.lock
+
+# Skills Directory
+skills/
