@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import IntroAnimation from './components/IntroAnimation'
 import Home from './pages/Home'
@@ -8,6 +8,24 @@ import LearningPlans from './pages/LearningPlans'
 import Progress from './pages/Progress'
 import AiAssistant from './pages/AiAssistant'
 import './App.css';
+
+function AppContent({ theme, onToggleTheme }) {
+  const { pathname } = useLocation()
+  const isLandingPage = pathname === '/'
+
+  return (
+    <div className={`app-container theme-${theme} ${isLandingPage ? 'home-dotted' : ''}`}>
+      <Navbar theme={theme} onToggleTheme={onToggleTheme} />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/assessments" element={<Assessments />} />
+        <Route path="/learning-plans" element={<LearningPlans />} />
+        <Route path="/progress" element={<Progress />} />
+        <Route path="/ai-assistant" element={<AiAssistant />} />
+      </Routes>
+    </div>
+  )
+}
 
 function App() {
   const [showIntro, setShowIntro] = useState(true)
@@ -33,16 +51,7 @@ function App() {
     <>
       {showIntro && <IntroAnimation />}
       <Router>
-        <div className={`app-container theme-${theme}`}>
-          <Navbar theme={theme} onToggleTheme={handleThemeToggle} />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/assessments" element={<Assessments />} />
-            <Route path="/learning-plans" element={<LearningPlans />} />
-            <Route path="/progress" element={<Progress />} />
-            <Route path="/ai-assistant" element={<AiAssistant />} />
-          </Routes>
-        </div>
+        <AppContent theme={theme} onToggleTheme={handleThemeToggle} />
       </Router>
     </>
   )

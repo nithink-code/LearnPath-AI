@@ -1,21 +1,114 @@
 .app-container {
   background-color: #050508;
-  background-image: radial-gradient(#1f2937 1px, transparent 1px);
-  background-size: 30px 30px;
   min-height: 100vh;
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .theme-dark {
   background-color: #050508;
-  background-image: radial-gradient(#1f2937 1px, transparent 1px);
   color: #ffffff;
 }
 
 .theme-light {
   background-color: #f8fafc;
-  background-image: radial-gradient(rgba(99, 102, 241, 0.14) 1px, transparent 1px);
   color: #0f172a;
+}
+
+.theme-light,
+.theme-light.app-container {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.theme-light * {
+  color: #000000 !important;
+}
+
+.theme-light :is(div, section, article, aside, main, header, footer, nav, form) {
+  background-image: none !important;
+}
+
+.theme-light :is(
+  .page-container,
+  .home-page,
+  .hero,
+  .hero-content,
+  .hero-visual,
+  .visual-card,
+  .page-content,
+  .lp-form-wrapper,
+  .lp-card,
+  .lp-result,
+  .lp-roadmap,
+  .lp-phase,
+  .assess-header,
+  .quiz-wrapper,
+  .quiz-card,
+  .code-layout,
+  .code-problem,
+  .code-editor-panel,
+  .prog-header,
+  .prog-kpi-grid,
+  .prog-hero-card,
+  .prog-chart-card,
+  .prog-row-3col,
+  .prog-row-3,
+  .prog-row-2,
+  .heatmap-card,
+  .action-card
+) {
+  background: rgba(248, 251, 255, 0.92) !important;
+  border-color: #d1d5db !important;
+}
+
+.theme-light :is(input, textarea, select, button, code, pre) {
+  background: #f9fbff !important;
+  color: #000000 !important;
+  border-color: #d1d5db !important;
+}
+
+.theme-light :is(
+  .btn-signin,
+  .theme-toggle,
+  .page-content,
+  .lp-input,
+  .lp-tag,
+  .lp-goal,
+  .quiz-card,
+  .prob-select,
+  .lang-select,
+  .editor-topbar,
+  .prog-period-badge,
+  .prog-chart-badge,
+  .action-item,
+  .heatmap-cell,
+  .quiz-progress-bar,
+  .prob-example,
+  .prob-constraints li
+) {
+  border-color: #9ca3af !important;
+}
+
+.theme-light .brand-gradient {
+  background: none !important;
+  -webkit-text-fill-color: #000000 !important;
+  color: #000000 !important;
+}
+
+.theme-light .page-title {
+  background: none !important;
+  -webkit-text-fill-color: #000000 !important;
+  color: #000000 !important;
+}
+
+.theme-dark.home-dotted {
+  background-image: radial-gradient(#1f2937 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+.theme-light.home-dotted {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.32) 1.15px, transparent 1.15px);
+  background-size: 30px 30px;
 }
 
 .brand-gradient {
