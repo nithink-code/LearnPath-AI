@@ -93,3 +93,93 @@ export const getProgress = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// Submit Code
+export const submitCode = async (req, res) => {
+  try {
+    const userId = req.auth.userId;
+    const { code, language, problemTitle } = req.body;
+
+    if (!code || !language || !problemTitle) {
+      return res.status(400).json({ error: 'code, language, and problemTitle are required' });
+    }
+
+    await Submission.create({
+      userId,
+      submissionType: 'coding',
+      code,
+      language,
+      problemTitle,
+      status: 'accepted',
+    });
+
+    // Update progress
+    let progress = await Progress.findOne({ userId });
+    const today = new Date().toDateString();
+    if (!progress) {
+      await Progress.create({ userId, totalSolved: 1, dailyStreak: 1, lastSolvedDate: new Date() });
+    } else {
+      progress.totalSolved += 1;
+      if (new Date(progress.lastSolvedDate).toDateString() !== today) {
+        progress.dailyStreak += 1;
+      }
+      progress.lastSolvedDate = new Date();
+      await progress.save();
+    }
+
+    res.json({ message: 'Code submission saved', status: 'accepted' });
+  } catch (error) {
+    console.error("submitCode error:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Submit Quiz
+export const submitQuiz = async (req, res) => {
+  try {
+    const userId = req.auth.userId;
+    const { answers, score, totalQuestions } = req.body;
+
+    if (score === undefined || !totalQuestions) {
+      return res.status(400).json({ error: 'score and totalQuestions are required' });
+    }
+
+    await Submission.create({
+      userId,
+      submissionType: 'quiz',
+      answers,
+      score,
+      totalQuestions,
+      status: 'accepted',
+    });
+
+    // Update progress
+    let progress = await Progress.findOne({ userId });
+    const today = new Date().toDateString();
+    if (!progress) {
+      await Progress.create({ userId, totalSolved: 1, dailyStreak: 1, lastSolvedDate: new Date() });
+    } else {
+      progress.totalSolved += 1;
+      if (new Date(progress.lastSolvedDate).toDateString() !== today) {
+        progress.dailyStreak += 1;
+      }
+      progress.lastSolvedDate = new Date();
+      await progress.save();
+    }
+
+    res.json({ message: 'Quiz submission saved', score, totalQuestions });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get Submissions
+export const getSubmissions = async (req, res) => {
+  try {
+    const userId = req.auth.userId;
+    const submissions = await Submission.find({ userId }).sort({ createdAt: -1 }).limit(50);
+    res.json(submissions);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

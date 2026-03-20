@@ -4,6 +4,7 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   Legend, ReferenceLine
 } from 'recharts';
+import './Pages.css';
 import './Progress.css';
 
 /* ─────────────────────────────────────────

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useUser } from '@clerk/clerk-react'
 import Navbar from './components/Navbar'
-import IntroAnimation from './components/IntroAnimation'
+import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Assessments from './pages/Assessments'
 import LearningPlans from './pages/LearningPlans'
@@ -9,22 +10,9 @@ import Progress from './pages/Progress'
 import AiAssistant from './pages/AiAssistant'
 import './App.css';
 
-function AppContent({ theme, onToggleTheme }) {
-  const { pathname } = useLocation()
-  const isLandingPage = pathname === '/'
-
-  return (
-    <div className={`app-container theme-${theme} ${isLandingPage ? 'home-dotted' : ''}`}>
-      <Navbar theme={theme} onToggleTheme={onToggleTheme} />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/assessments" element={<Assessments />} />
-        <Route path="/learning-plans" element={<LearningPlans />} />
-        <Route path="/progress" element={<Progress />} />
-        <Route path="/ai-assistant" element={<AiAssistant />} />
-      </Routes>
-    </div>
-  )
+function HomeRedirect() {
+  const { isSignedIn } = useUser();
+  return isSignedIn ? <Navigate to="/learning-plans" replace /> : <Home />;
 }
 
 function App() {
@@ -48,12 +36,18 @@ function App() {
   }, [theme])
 
   return (
-    <>
-      {showIntro && <IntroAnimation />}
-      <Router>
-        <AppContent theme={theme} onToggleTheme={handleThemeToggle} />
-      </Router>
-    </>
+    <Router>
+      <div className="app-container">
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<HomeRedirect />} />
+          <Route path="/assessments" element={<ProtectedRoute><Assessments /></ProtectedRoute>} />
+          <Route path="/learning-plans" element={<ProtectedRoute><LearningPlans /></ProtectedRoute>} />
+          <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
+          <Route path="/ai-assistant" element={<ProtectedRoute><AiAssistant /></ProtectedRoute>} />
+        </Routes>
+      </div>
+    </Router>
   )
 }
 

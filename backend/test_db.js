@@ -1,11 +1,12 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const submissionSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true
   },
-  // Legacy assessment submissions
   assessmentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Assessment"
@@ -13,12 +14,10 @@ const submissionSchema = new mongoose.Schema({
   answers: [String],
   score: Number,
   aiFeedback: String,
-  // Quiz / Coding submissions
   submissionType: {
     type: String,
     enum: ['quiz', 'coding'],
   },
-  // Coding fields
   code: String,
   language: String,
   problemTitle: String,
@@ -27,12 +26,29 @@ const submissionSchema = new mongoose.Schema({
     enum: ['accepted', 'attempted'],
     default: 'attempted'
   },
-  // Quiz fields
   totalQuestions: Number,
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
+const Submission = mongoose.model("Submission", submissionSchema);
 
-export default mongoose.model("Submission", submissionSchema);
+async function test() {
+  await mongoose.connect(process.env.MONGOURL);
+  try {
+    await Submission.create({
+      userId: 'user_2',
+      submissionType: 'coding',
+      code: 'function sum() {}',
+      language: 'javascript',
+      problemTitle: 'Two Sum',
+      status: 'accepted',
+    });
+    console.log("Success");
+  } catch (err) {
+    console.error("Submission error:", err);
+  }
+  process.exit(0);
+}
+test();
