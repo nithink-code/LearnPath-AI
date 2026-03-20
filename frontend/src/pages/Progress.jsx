@@ -1,122 +1,62 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
-  Radar, RadarChart, PolarGrid, PolarAngleAxis
+  LineChart, Line, BarChart, Bar, XAxis, YAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+  Legend, ReferenceLine
 } from 'recharts';
-import './Pages.css';
 import './Progress.css';
 
-/* ── Palette ── */
-const C = {
-  teal: '#14B8A6',
-  amber: '#F59E0B',
-  text: '#E6EDF3',
-  muted: '#9CA3AF',
-  dim: '#4B5563',
-  card: '#161B22',
-  easy: '#22C55E',
-  medium: '#F59E0B',
-  hard: '#EF4444',
-  tealLight: 'rgba(20,184,166,0.2)',
-  amberLight: 'rgba(245,158,11,0.2)'
-};
-
-/* ── Icons ── */
-const Icon = {
-  check: (c = C.teal) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>,
-  flame: (c = C.amber) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></svg>,
-  trophy: (c = C.amber) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg>,
-  goal: (c = C.teal) => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>,
-  trendingUp: (c = C.teal) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg>,
-  alert: (c = C.hard) => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>,
-  clock: (c = C.muted) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
-  zap: (c = C.amber) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
-  arrowRight: (c = C.teal) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-};
-
-/* ── Data ── */
-const solvedData = [
-  { day: 'Feb 3', easy: 2, medium: 0, hard: 0, solved: 2 },
-  { day: 'Feb 5', easy: 3, medium: 2, hard: 0, solved: 5 },
-  { day: 'Feb 8', easy: 1, medium: 2, hard: 0, solved: 3 },
-  { day: 'Feb 10', easy: 4, medium: 3, hard: 0, solved: 7 },
-  { day: 'Feb 13', easy: 1, medium: 2, hard: 1, solved: 4 },
-  { day: 'Feb 15', easy: 4, medium: 4, hard: 1, solved: 9 },
-  { day: 'Feb 18', easy: 2, medium: 3, hard: 1, solved: 6 },
-  { day: 'Feb 20', easy: 4, medium: 5, hard: 2, solved: 11 },
-  { day: 'Feb 22', easy: 2, medium: 4, hard: 2, solved: 8 },
-  { day: 'Feb 25', easy: 5, medium: 6, hard: 2, solved: 13 },
-  { day: 'Feb 27', easy: 3, medium: 5, hard: 2, solved: 10 },
-  { day: 'Mar 1', easy: 5, medium: 7, hard: 3, solved: 15 },
+/* ─────────────────────────────────────────
+   DUMMY DATA
+───────────────────────────────────────── */
+const rankData = [
+  { date: 'Feb 1',  rank: 2480 }, { date: 'Feb 3',  rank: 2410 },
+  { date: 'Feb 5',  rank: 2350 }, { date: 'Feb 8',  rank: 2290 },
+  { date: 'Feb 10', rank: 2240 }, { date: 'Feb 13', rank: 2180 },
+  { date: 'Feb 15', rank: 2120 }, { date: 'Feb 18', rank: 2050 },
+  { date: 'Feb 20', rank: 1990 }, { date: 'Feb 22', rank: 1930 },
+  { date: 'Feb 25', rank: 1870 }, { date: 'Feb 27', rank: 1800 },
+  { date: 'Mar 1',  rank: 1740 }, { date: 'Mar 3',  rank: 1700 },
 ];
 
-const weeklyStreak = [
-  { week: 'W1', streak: 3 }, { week: 'W2', streak: 5 },
-  { week: 'W3', streak: 2 }, { week: 'W4', streak: 7 },
-  { week: 'W5', streak: 6 }, { week: 'W6', streak: 7 },
+const codingData = [
+  { date: 'Feb 1',  solved: 2 }, { date: 'Feb 3',  solved: 1 },
+  { date: 'Feb 5',  solved: 1 }, { date: 'Feb 8',  solved: 13 },
+  { date: 'Feb 10', solved: 5 }, { date: 'Feb 13', solved: 3 },
+  { date: 'Feb 15', solved: 7 }, { date: 'Feb 18', solved: 4 },
+  { date: 'Feb 20', solved: 9 }, { date: 'Feb 22', solved: 2 },
+  { date: 'Feb 25', solved: 6 }, { date: 'Feb 27', solved: 11 },
+  { date: 'Mar 1',  solved: 8 }, { date: 'Mar 3',  solved: 5 },
 ];
 
-const categoryData = [
-  { name: 'Arrays', solved: 24, pct: 100 },
-  { name: 'Strings', solved: 18, pct: 75 },
-  { name: 'DP', solved: 15, pct: 63 },
-  { name: 'Trees', solved: 12, pct: 50 },
-  { name: 'Sorting', solved: 10, pct: 42 },
-  { name: 'Graphs', solved: 8, pct: 33 },
+const mcqData = [
+  { date: 'Feb 1',  solved: 0 }, { date: 'Feb 3',  solved: 0 },
+  { date: 'Feb 5',  solved: 1 }, { date: 'Feb 8',  solved: 0 },
+  { date: 'Feb 10', solved: 0 }, { date: 'Feb 13', solved: 2 },
+  { date: 'Feb 15', solved: 0 }, { date: 'Feb 18', solved: 0 },
+  { date: 'Feb 20', solved: 1 }, { date: 'Feb 22', solved: 0 },
+  { date: 'Feb 25', solved: 0 }, { date: 'Feb 27', solved: 0 },
+  { date: 'Mar 1',  solved: 0 }, { date: 'Mar 3',  solved: 1 },
 ];
 
-const radarData = [
-  { subject: 'Arrays', A: 100, fullMark: 100 },
-  { subject: 'Strings', A: 75, fullMark: 100 },
-  { subject: 'Sorting', A: 42, fullMark: 100 },
-  { subject: 'Trees', A: 50, fullMark: 100 },
-  { subject: 'Graphs', A: 33, fullMark: 100 },
-  { subject: 'DP', A: 63, fullMark: 100 },
+const quizData = [
+  { name: 'RED Quiz - Programming in C++', score: 130, fill: '#ff2e63' },
+  { name: 'Data Structures Basics',        score: 87,  fill: '#c01b48' },
+  { name: 'Algorithms I',                  score: 104, fill: '#a01540' },
 ];
 
-const difficultyData = [
-  { label: 'EASY', solved: 47, total: 60, color: C.easy },
-  { label: 'MEDIUM', solved: 35, total: 55, color: C.medium },
-  { label: 'HARD', solved: 11, total: 40, color: C.hard },
-];
-
-const weakTopics = [
-  { topic: 'Graphs', lastSeen: '14 days ago', pct: 33 },
-  { topic: 'Dynamic Prog.', lastSeen: '8 days ago', pct: 38 },
-  { topic: 'Backtracking', lastSeen: '21 days ago', pct: 20 },
-];
-
-const recommendedDocs = [
-  { title: "Introduction to Trie", type: "Article", time: "10 min" },
-  { title: "Sliding Window Pattern", type: "Problems", time: "5 questions" },
-  { title: "Mastering Backtracking", type: "Video", time: "15 min" },
-  { title: "Graph BFS / DFS", type: "Video", time: "22 min" }
-];
-
-/* ── Helpers ── */
-const Ring = ({ pct, color, size = 56, stroke = 4, label }) => {
-  const r = (size - stroke * 2) / 2;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (pct / 100) * circ;
-  return (
-    <div className="ring-wrap" style={{ width: size, height: size, position: 'relative' }}>
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={stroke} />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
-      </svg>
-      {label && <span className="ring-label-inset" style={{ color }}>{label}</span>}
-    </div>
-  );
-};
-
-const CustomTooltip = ({ active, payload, label }) => {
+/* ─────────────────────────────────────────
+   CUSTOM TOOLTIP
+───────────────────────────────────────── */
+const CustomTooltip = ({ active, payload, label, inverted = false }) => {
   if (active && payload?.length) {
     return (
-      <div className="chart-tooltip">
-        <p className="tooltip-label">{label}</p>
-        {payload.map((entry, idx) => (
-          <p key={idx} className="tooltip-val" style={{ color: entry.color }}>
-            {entry.name}: {entry.value}
+      <div className="pg-tooltip">
+        <p className="pg-tooltip-date">{label}</p>
+        {payload.map((entry, i) => (
+          <p key={i} className="pg-tooltip-val" style={{ color: entry.color }}>
+            {entry.name}:{' '}
+            <strong>{inverted ? `#${entry.value}` : entry.value}</strong>
           </p>
         ))}
       </div>
@@ -125,309 +65,351 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-// Heatmap mock data
-const generateHeatmapData = () => {
-  const weeks = [];
-  const today = new Date();
-  for (let w = 22; w >= 0; w--) { // Expanded width for a fuller look
-    const days = [];
-    for (let d = 6; d >= 0; d--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - (w * 7 + d));
-      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+/* ─────────────────────────────────────────
+   SKELETON LOADER
+───────────────────────────────────────── */
+const SkeletonCard = ({ height = 200 }) => (
+  <div className="pg-skeleton-card" style={{ height }}>
+    <div className="pg-skeleton-line" style={{ width: '40%', height: 14 }} />
+    <div className="pg-skeleton-line" style={{ width: '25%', height: 11, marginTop: 8 }} />
+    <div className="pg-skeleton-block" style={{ marginTop: 24, flex: 1, borderRadius: 8 }} />
+  </div>
+);
 
-      const count = Math.random() > 0.4 ? Math.floor(Math.random() * 8) + 1 : 0;
-      let level = 0;
-      if (count > 0 && count <= 2) level = 1;
-      else if (count > 2 && count <= 4) level = 2;
-      else if (count > 4 && count <= 6) level = 3;
-      else if (count > 6) level = 4;
+/* ─────────────────────────────────────────
+   STAT BOX
+───────────────────────────────────────── */
+const StatBox = ({ label, value, trend, color = '#ff2e63' }) => (
+  <div className="pg-stat-box">
+    <span className="pg-stat-label">{label}</span>
+    <span className="pg-stat-value" style={{ color }}>{value}</span>
+    {trend && <span className="pg-stat-trend">{trend}</span>}
+  </div>
+);
 
-      days.push({ level, count, dateStr });
-    }
-    weeks.push(days);
-  }
-  return weeks;
-}
-const heatmapWeeks = generateHeatmapData();
-
-// Weekly tracker data
-const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const weekDone = 4;
-const weekGoal = 6;
-
+/* ─────────────────────────────────────────
+   MAIN COMPONENT
+───────────────────────────────────────── */
 export default function Progress() {
-  const totalSolved = solvedData.reduce((s, d) => s + d.solved, 0);
+  const [loaded, setLoaded] = useState(false);
+
+  // Simulate async data fetch + skeleton delay
+  useEffect(() => {
+    const t = setTimeout(() => setLoaded(true), 1100);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
-    <div className="page-container progress-page">
-      <div className="prog-header">
-        <div>
-          <h1 className="prog-title">Growth Analytics</h1>
-          <p className="prog-subtitle">Comprehensive performance & velocity tracking</p>
-        </div>
-        <div className="prog-period-badge">Last 90 days</div>
-      </div>
+    <div className="pg-root">
+      <div className="pg-layout">
 
-      {/* ── Row 1: KPI Grid (4 cols, NEW STYLE) ── */}
-      <div className="prog-kpi-grid">
-        <div className="prog-hero-card">
-          <div className="prog-hero-icon-wrap" style={{ background: C.tealLight, borderColor: 'rgba(20,184,166,0.3)' }}>{Icon.check()}</div>
-          <div className="prog-hero-label">Total Problems</div>
-          <div className="prog-hero-value">{categoryData.reduce((s, c) => s + c.solved, 0)}</div>
-          <div className="prog-hero-trend">{Icon.trendingUp()} <span>+12 this week</span></div>
-        </div>
+        {/* ══════════════ LEFT (70%) ══════════════ */}
+        <div className="pg-left">
 
-        <div className="prog-hero-card">
-          <div className="prog-hero-icon-wrap" style={{ background: C.amberLight, borderColor: 'rgba(245,158,11,0.3)' }}>{Icon.flame()}</div>
-          <div className="prog-hero-label">Consistency Score</div>
-          <div className="prog-hero-value" style={{ color: C.amber }}>8.4<span style={{ fontSize: '1.2rem', color: C.muted }}>/10</span></div>
-          <div className="prog-hero-trend" style={{ color: C.amber }}>Current Streak: 7 Days</div>
-        </div>
+          {/* ── Card 1: Rank Trend ── */}
+          {!loaded ? (
+            <SkeletonCard height={300} />
+          ) : (
+            <div className="pg-card pg-card-rank pg-fade-in">
+              <div className="pg-card-header">
+                <div>
+                  <h2 className="pg-card-title">Track Your Progress</h2>
+                  <p className="pg-card-sub">Showing Daily Rank / Score for the last 30 days</p>
+                </div>
+                <div className="pg-rank-stats">
+                  <StatBox label="Overall Rank" value="#1,700" trend="↑ 780 places" />
+                  <StatBox label="Overall Score" value="4,820" trend="+320 pts" color="#22c55e" />
+                </div>
+              </div>
 
-        <div className="prog-hero-card">
-          <div className="prog-hero-icon-wrap" style={{ background: C.tealLight, borderColor: 'rgba(20,184,166,0.3)' }}>{Icon.zap()}</div>
-          <div className="prog-hero-label">Learning Velocity</div>
-          <div className="prog-hero-value">1.8x</div>
-          <div className="prog-hero-trend">Faster improvement vs last mo.</div>
-        </div>
+              <ResponsiveContainer width="100%" height={210}>
+                <LineChart data={rankData} margin={{ top: 10, right: 16, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="rankGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#ff2e63" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#ff2e63" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: '#6b7280', fontSize: 10 }}
+                    axisLine={false} tickLine={false}
+                    interval={2}
+                  />
+                  <YAxis
+                    reversed
+                    tick={{ fill: '#6b7280', fontSize: 10 }}
+                    axisLine={false} tickLine={false}
+                    tickFormatter={v => `#${v}`}
+                    domain={['dataMin - 100', 'dataMax + 100']}
+                  />
+                  <Tooltip content={<CustomTooltip inverted />} />
+                  <Line
+                    type="monotoneX"
+                    dataKey="rank"
+                    name="Rank"
+                    stroke="#ff2e63"
+                    strokeWidth={2.5}
+                    dot={{ fill: '#ff2e63', r: 4, strokeWidth: 0 }}
+                    activeDot={{ r: 6, fill: '#ff2e63', stroke: 'rgba(255,46,99,0.3)', strokeWidth: 6 }}
+                    isAnimationActive
+                    animationDuration={1200}
+                    animationEasing="ease-out"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
 
-        <div className="prog-hero-card">
-          <div className="prog-hero-icon-wrap" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }}>{Icon.clock()}</div>
-          <div className="prog-hero-label">Avg Solve Time</div>
-          <div className="prog-hero-value" style={{ color: C.text }}>14<span style={{ fontSize: '1.4rem' }}>m</span></div>
-          <div className="prog-hero-trend" style={{ color: C.muted }}>1.2 attempts per problem</div>
-        </div>
-      </div>
+          {/* ── Bottom Row: 3 mini-cards ── */}
+          <div className="pg-bottom-row">
 
-      {/* ── Row 2: Difficulty Rings & Weekly Goal & Needs Attention (OLD BEST) ── */}
-      <div className="prog-row-3col">
-        {/* Difficulty Breakdown */}
-        <div className="prog-chart-card">
-          <div className="prog-chart-header">
-            <h3 className="prog-chart-title">Difficulty Breakdown</h3>
-            <span className="prog-chart-meta">Total solved</span>
-          </div>
-          <div className="prog-difficulty">
-            {difficultyData.map((d) => {
-              const pct = Math.round((d.solved / d.total) * 100);
-              return (
-                <div key={d.label} className="prog-diff-item">
-                  <Ring pct={pct} color={d.color} size={64} stroke={5} label={`${pct}%`} />
-                  <div className="prog-diff-info">
-                    <span className="prog-diff-label" style={{ color: d.color }}>{d.label}</span>
-                    <span className="prog-diff-val">{d.solved}<span className="prog-diff-total">/{d.total}</span></span>
+            {/* ── Card 2: Daily Coding ── */}
+            {!loaded ? (
+              <SkeletonCard height={230} />
+            ) : (
+              <div className="pg-card pg-fade-in pg-delay-1">
+                <h3 className="pg-card-title">Daily Coding Questions</h3>
+                <p className="pg-card-sub">Problems solved per day</p>
+                <ResponsiveContainer width="100%" height={155}>
+                  <BarChart data={codingData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#ff2e63" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#7b0025" stopOpacity={0.8} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fill: '#6b7280', fontSize: 9 }}
+                      axisLine={false} tickLine={false}
+                      interval={2}
+                    />
+                    <YAxis
+                      tick={{ fill: '#6b7280', fontSize: 9 }}
+                      axisLine={false} tickLine={false}
+                    />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,46,99,0.05)' }} />
+                    <Bar
+                      dataKey="solved"
+                      name="Solved"
+                      fill="url(#barGrad)"
+                      radius={[4, 4, 0, 0]}
+                      isAnimationActive
+                      animationDuration={1000}
+                      animationEasing="ease-out"
+                      animationBegin={300}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* ── Card 3: MCQs ── */}
+            {!loaded ? (
+              <SkeletonCard height={230} />
+            ) : (
+              <div className="pg-card pg-fade-in pg-delay-2">
+                <h3 className="pg-card-title">Daily In-Video MCQs</h3>
+                <p className="pg-card-sub">MCQs solved per day</p>
+                <ResponsiveContainer width="100%" height={155}>
+                  <LineChart data={mcqData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fill: '#6b7280', fontSize: 9 }}
+                      axisLine={false} tickLine={false}
+                      interval={2}
+                    />
+                    <YAxis
+                      tick={{ fill: '#6b7280', fontSize: 9 }}
+                      axisLine={false} tickLine={false}
+                      allowDecimals={false}
+                      domain={[0, 3]}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Line
+                      type="monotone"
+                      dataKey="solved"
+                      name="MCQs"
+                      stroke="#ff2e63"
+                      strokeWidth={1.5}
+                      strokeOpacity={0.5}
+                      dot={{ fill: '#ff2e63', r: 3, fillOpacity: 0.7, strokeWidth: 0 }}
+                      activeDot={{ r: 5, fill: '#ff2e63' }}
+                      isAnimationActive
+                      animationDuration={1200}
+                      animationBegin={500}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* ── Card 4: Recent Quiz ── */}
+            {!loaded ? (
+              <SkeletonCard height={230} />
+            ) : (
+              <div className="pg-card pg-fade-in pg-delay-3">
+                <h3 className="pg-card-title">Recent Quiz Scores</h3>
+                <p className="pg-card-sub">Latest quiz performance</p>
+                <ResponsiveContainer width="100%" height={155}>
+                  <BarChart
+                    data={quizData}
+                    layout="vertical"
+                    margin={{ top: 8, right: 16, left: 4, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
+                    <XAxis
+                      type="number"
+                      tick={{ fill: '#6b7280', fontSize: 9 }}
+                      axisLine={false} tickLine={false}
+                      domain={[0, 160]}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={90}
+                      tick={({ x, y, payload }) => (
+                        <foreignObject x={x - 90} y={y - 10} width={88} height={24}>
+                          <div style={{
+                            fontSize: 8,
+                            color: '#9ca3af',
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            textOverflow: 'ellipsis',
+                            textAlign: 'right',
+                            paddingRight: 4
+                          }}>
+                            {payload.value}
+                          </div>
+                        </foreignObject>
+                      )}
+                      axisLine={false} tickLine={false}
+                    />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,46,99,0.05)' }} />
+                    <Bar
+                      dataKey="score"
+                      name="Score"
+                      radius={[0, 4, 4, 0]}
+                      isAnimationActive
+                      animationDuration={1000}
+                      animationBegin={600}
+                    >
+                      {quizData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+          </div>{/* end pg-bottom-row */}
+        </div>{/* end pg-left */}
+
+        {/* ══════════════ RIGHT (30%) ══════════════ */}
+        <div className="pg-right">
+
+          {/* ── Profile Card ── */}
+          {!loaded ? (
+            <SkeletonCard height={320} />
+          ) : (
+            <div className="pg-card pg-profile-card pg-fade-in">
+              <div className="pg-avatar-wrap">
+                <div className="pg-avatar">
+                  {/* Gradient avatar placeholder */}
+                  <div className="pg-avatar-inner">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <radialGradient id="bgGrad" cx="50%" cy="40%" r="60%">
+                          <stop offset="0%" stopColor="#2a1a3e" />
+                          <stop offset="100%" stopColor="#0d0d1a" />
+                        </radialGradient>
+                      </defs>
+                      <circle cx="50" cy="50" r="50" fill="url(#bgGrad)" />
+                      {/* Body */}
+                      <ellipse cx="50" cy="85" rx="22" ry="18" fill="#6d28d9" opacity="0.9" />
+                      {/* Head */}
+                      <circle cx="50" cy="52" r="18" fill="#fbbf80" />
+                      {/* Hair */}
+                      <ellipse cx="50" cy="37" rx="19" ry="10" fill="#1a0a3a" />
+                      <ellipse cx="50" cy="34" rx="14" ry="7" fill="#2d1060" />
+                      {/* Eyes */}
+                      <circle cx="44" cy="52" r="2.5" fill="#1e1b4b" />
+                      <circle cx="56" cy="52" r="2.5" fill="#1e1b4b" />
+                      {/* Smile */}
+                      <path d="M44 58 Q50 63 56 58" stroke="#c97b4f" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                    </svg>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Weekly Goal Tracker */}
-        <div className="prog-chart-card">
-          <div className="prog-chart-header">
-            <h3 className="prog-chart-title">Weekly Goal</h3>
-            <span className="prog-chart-badge" style={{ color: C.teal, borderColor: 'rgba(20,184,166,0.3)' }}>
-              {Icon.goal()} &nbsp;{weekDone}/{weekGoal} days
-            </span>
-          </div>
-          <div className="prog-week-days">
-            {weekDays.map((day, i) => {
-              const done = i < weekDone;
-              const today = i === weekDone;
-              return (
-                <div key={day} className={`prog-day-col ${done ? 'done' : ''} ${today ? 'today' : ''}`}>
-                  <div className="prog-day-dot" style={{
-                    background: done ? C.teal : 'rgba(255,255,255,0.05)',
-                    boxShadow: done ? `0 0 10px rgba(20,184,166,0.3)` : 'none'
-                  }} />
-                  <span className="prog-day-lbl">{day}</span>
+                <div className="pg-avatar-badge">
+                  <span>4.8%</span>
                 </div>
-              );
-            })}
-          </div>
-          <div className="prog-week-bar-bg">
-            <div className="prog-week-bar-fill" style={{ width: `${(weekDone / weekGoal) * 100}%` }} />
-          </div>
-          <p className="prog-week-note">
-            {weekGoal - weekDone > 0
-              ? `${weekGoal - weekDone} more ${weekGoal - weekDone === 1 ? 'day' : 'days'} to hit your weekly goal`
-              : `Weekly goal complete!`}
-          </p>
-        </div>
-
-        {/* Weak Topics (Text Only - Fixed Layout) */}
-        <div className="prog-chart-card">
-          <div className="prog-chart-header">
-            <h3 className="prog-chart-title">Needs Attention</h3>
-            <span className="prog-chart-badge" style={{ color: C.hard, borderColor: 'rgba(239,68,68,0.25)' }}>
-              {Icon.alert(C.hard)} &nbsp;Weak areas
-            </span>
-          </div>
-          <div className="prog-weak-list">
-            {weakTopics.map(t => (
-              <div key={t.topic} className="prog-weak-row">
-                <div className="prog-weak-info">
-                  <span className="prog-weak-topic">{t.topic}</span>
-                  <span className="prog-weak-since">Last practiced {t.lastSeen}</span>
-                </div>
-                <span className="prog-weak-stat" style={{ color: t.pct < 25 ? C.hard : C.medium }}>{t.pct}% mastery</span>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      {/* ── Row 3: Practice Consistency & Topic Mastery Profile (NEW HYBRID) ── */}
-      <div className="prog-row-3">
-        {/* Heatmap */}
-        <div className="prog-chart-card heatmap-card">
-          <div className="prog-chart-header">
-            <h3 className="prog-chart-title">Practice Consistency</h3>
-            <span className="prog-chart-meta">396 contributions in the last 6 months</span>
-          </div>
-          <div className="heatmap-container">
-            <div className="heatmap-grid" style={{ overflowX: 'hidden' }}>
-              {heatmapWeeks.map((week, wIdx) => (
-                <div key={wIdx} className="heatmap-col">
-                  {week.map((day, dIdx) => (
-                    <div
-                      key={dIdx}
-                      className="heatmap-cell"
-                      data-level={day.level}
-                      data-tooltip={`${day.count} problem${day.count !== 1 ? 's' : ''} solved on ${day.dateStr}`}
-                    />
-                  ))}
+              <h2 className="pg-profile-name">Alex Johnson</h2>
+              <p className="pg-profile-handle">@alexcodes · Full Stack Track</p>
+
+              <div className="pg-profile-stats">
+                <div className="pg-pstat-card">
+                  <span className="pg-pstat-icon">📚</span>
+                  <div>
+                    <div className="pg-pstat-label">Lectures Progress</div>
+                    <div className="pg-pstat-val">
+                      <span className="pg-pstat-hi">29</span>
+                      <span className="pg-pstat-total"> / 598 Completed</span>
+                    </div>
+                    <div className="pg-pstat-bar-bg">
+                      <div className="pg-pstat-bar-fill" style={{ width: `${(29 / 598) * 100}%` }} />
+                    </div>
+                  </div>
                 </div>
-              ))}
+
+                <div className="pg-pstat-card">
+                  <span className="pg-pstat-icon">⌨️</span>
+                  <div>
+                    <div className="pg-pstat-label">Coding Problems</div>
+                    <div className="pg-pstat-val">
+                      <span className="pg-pstat-hi">28</span>
+                      <span className="pg-pstat-total"> / 381 Solved</span>
+                    </div>
+                    <div className="pg-pstat-bar-bg">
+                      <div className="pg-pstat-bar-fill" style={{ width: `${(28 / 381) * 100}%`, background: '#ff2e63' }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="heatmap-legend">
-              <span>Less</span>
-              <div className="heatmap-cell" data-level="0" />
-              <div className="heatmap-cell" data-level="1" />
-              <div className="heatmap-cell" data-level="2" />
-              <div className="heatmap-cell" data-level="3" />
-              <div className="heatmap-cell" data-level="4" />
-              <span>More</span>
+          )}
+
+
+
+          {/* ── Weekly Activity Summary ── */}
+          {!loaded ? (
+            <SkeletonCard height={130} />
+          ) : (
+            <div className="pg-card pg-fade-in pg-delay-3">
+              <div className="pg-card-header" style={{ marginBottom: '0.75rem' }}>
+                <h3 className="pg-card-title">This Week</h3>
+                <span className="pg-badge-green">On Track</span>
+              </div>
+              <div className="pg-week-dots">
+                {['M','T','W','T','F','S','S'].map((d, i) => (
+                  <div key={i} className="pg-dot-col">
+                    <div className={`pg-dot ${i < 5 ? 'pg-dot-done' : ''}`} />
+                    <span className="pg-dot-label">{d}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="pg-week-msg">5 of 7 days active — you're crushing it! 🚀</p>
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Radar Chart */}
-        <div className="prog-chart-card">
-          <div className="prog-chart-header">
-            <h3 className="prog-chart-title">Topic Mastery Profile</h3>
-            <span className="prog-chart-badge" style={{ color: C.amber, borderColor: 'rgba(245,158,11,0.3)' }}>
-              Biggest Jump: Strings (+12%)
-            </span>
-          </div>
-          <ResponsiveContainer width="100%" height={250}>
-            <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData} margin={{ top: 10, bottom: 10 }}>
-              <PolarGrid stroke="rgba(255,255,255,0.08)" />
-              <PolarAngleAxis dataKey="subject" tick={{ fill: C.muted, fontSize: 11 }} />
-              <Radar name="Mastery" dataKey="A" stroke={C.teal} fill={C.teal} fillOpacity={0.3} dot={{ r: 3, fill: C.teal }} />
-              <Tooltip content={<CustomTooltip />} />
-            </RadarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* ── Row 4: Timeline Charts (Area + Stacked Area) (MIX) ── */}
-      <div className="prog-row-2">
-        <div className="prog-chart-card">
-          <div className="prog-chart-header">
-            <h3 className="prog-chart-title">Questions Solved Over Time</h3>
-            <span className="prog-chart-badge" style={{ color: C.teal, borderColor: 'rgba(20,184,166,0.3)' }}>
-              {Icon.trendingUp()} &nbsp;Upward trend
-            </span>
-          </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={solvedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="solvedGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={C.teal} stopOpacity={0.2} />
-                  <stop offset="95%" stopColor={C.teal} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="day" tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-              <Area type="monotone" dataKey="solved" stroke={C.teal} strokeWidth={2}
-                fill="url(#solvedGrad)" dot={{ fill: C.teal, r: 3 }} activeDot={{ r: 5 }} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="prog-chart-card">
-          <div className="prog-chart-header">
-            <h3 className="prog-chart-title">Difficulty Progression</h3>
-            <span className="prog-chart-meta">Questions solved by type</span>
-          </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={solvedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="day" tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-              <Area type="monotone" dataKey="hard" stackId="1" stroke={C.hard} fill={C.hard} fillOpacity={0.6} />
-              <Area type="monotone" dataKey="medium" stackId="1" stroke={C.medium} fill={C.medium} fillOpacity={0.6} />
-              <Area type="monotone" dataKey="easy" stackId="1" stroke={C.easy} fill={C.easy} fillOpacity={0.6} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* ── Row 5: Categories & Actions (2 cols) ── */}
-      <div className="prog-row-2">
-        <div className="prog-chart-card">
-          <div className="prog-chart-header">
-            <h3 className="prog-chart-title">Category Breakdown</h3>
-            <span className="prog-chart-meta">Total solved by topic</span>
-          </div>
-          <div className="prog-categories">
-            {categoryData.map((cat, i) => (
-              <div key={cat.name} className="prog-cat-row">
-                <span className="prog-cat-rank">#{i + 1}</span>
-                <span className="prog-cat-name">{cat.name}</span>
-                <div className="prog-cat-bar-bg">
-                  <div className="prog-cat-bar-fill" style={{
-                    width: `${cat.pct}%`,
-                    background: i % 2 === 0 ? C.teal : 'rgba(20,184,166,0.5)',
-                  }} />
-                </div>
-                <span className="prog-cat-count">{cat.solved}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="prog-chart-card action-card">
-          <div className="prog-chart-header">
-            <h3 className="prog-chart-title">Recommended Next Steps</h3>
-            <span className="prog-chart-meta">Curated for your progression</span>
-          </div>
-          <div className="action-list">
-            {recommendedDocs.map((doc, i) => (
-              <div key={i} className="action-item">
-                <div className="action-info">
-                  <div className="action-type" style={{
-                    color: doc.type === 'Video' ? C.amber : C.teal,
-                    background: doc.type === 'Video' ? C.amberLight : C.tealLight
-                  }}>{doc.type}</div>
-                  <span className="action-title">{doc.title}</span>
-                </div>
-                <div className="action-right">
-                  <span className="action-time">{doc.time}</span>
-                  <button className="action-btn">{Icon.arrowRight()}</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
+        </div>{/* end pg-right */}
+      </div>{/* end pg-layout */}
     </div>
   );
 }
