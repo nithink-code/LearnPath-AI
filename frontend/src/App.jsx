@@ -17,11 +17,7 @@ function HomeRedirect() {
 
 function App() {
   const [showIntro, setShowIntro] = useState(true)
-  const [theme, setTheme] = useState(() => localStorage.getItem('learnpath-theme') || 'dark')
-
-  const handleThemeToggle = () => {
-    setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'))
-  }
+  const theme = 'dark'
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -32,10 +28,9 @@ function App() {
   }, [])
 
   useEffect(() => {
-    localStorage.setItem('learnpath-theme', theme)
     document.body.classList.remove('theme-dark', 'theme-light')
-    document.body.classList.add(`theme-${theme}`)
-  }, [theme])
+    document.body.classList.add(`theme-dark`)
+  }, [])
 
   return (
     <Router>
@@ -43,7 +38,7 @@ function App() {
         <div className="bg-beam bg-beam-1"></div>
         <div className="bg-beam bg-beam-2"></div>
         <div className="bg-beam bg-beam-3"></div>
-        <Navbar theme={theme} onToggleTheme={handleThemeToggle} />
+        <Navbar theme={theme} />
         <Routes>
           <Route path="/" element={<HomeRedirect />} />
           <Route path="/assessments" element={<ProtectedRoute><Assessments theme={theme} /></ProtectedRoute>} />
