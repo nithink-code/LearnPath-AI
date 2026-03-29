@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useUser } from '@clerk/clerk-react'
 import { useLocation } from 'react-router-dom'
@@ -13,6 +13,7 @@ import AiAssistant from './pages/AiAssistant'
 import StrokeLogoLoader from './components/StrokeLogoLoader'
 import StarBackground from './components/StarBackground'
 import Footer from './components/Footer'
+import DecryptedText from './components/DecryptedText/DecryptedText'
 import './App.css';
 import './styles/uiSystem.css';
 
@@ -21,15 +22,31 @@ function AppContent({ theme, onToggleTheme }) {
   const [showPageLoader, setShowPageLoader] = useState(true);
   const initialLoadRef = useRef(true);
   const [loaderVariant, setLoaderVariant] = useState('logo');
+  const [loadingMessage, setLoadingMessage] = useState('ACCESSING DATA...');
+
+  const pageMessages = useMemo(() => ({
+    '/': 'ACCESSING HUB...',
+    '/assessments': 'ANALYZING SKILLSET...',
+    '/learning-plans': 'OPTIMIZING CURRICULUM...',
+    '/progress': 'CALIBRATING PERFORMANCE...',
+    '/ai-assistant': 'SYNCHRONIZING NEURAL AI...',
+    '/about': 'RETRIEVING INTEL...'
+  }), []);
 
   useEffect(() => {
     const isFirstLoad = initialLoadRef.current;
     setLoaderVariant(isFirstLoad ? 'logo' : 'brain');
+    
+    if (!isFirstLoad) {
+      const msg = pageMessages[location.pathname] || 'ACCESSING DATA...';
+      setLoadingMessage(msg);
+    }
+
     setShowPageLoader(true);
     const timer = setTimeout(() => {
       setShowPageLoader(false);
       initialLoadRef.current = false;
-    }, isFirstLoad ? 1400 : 650);
+    }, isFirstLoad ? 3000 : 1100);
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
@@ -57,7 +74,29 @@ function AppContent({ theme, onToggleTheme }) {
 
       {showPageLoader && (
         <div className="route-loader-overlay" aria-live="polite" aria-label="Loading page">
-          <StrokeLogoLoader size={loaderVariant === 'logo' ? 180 : 130} label="learning and beyond ..." fade="in" gradient={true} />
+          {loaderVariant === 'logo' ? (
+            <StrokeLogoLoader size={180} label="learning and beyond ..." fade="in" gradient={true} />
+          ) : (
+            <div className="decrypted-loader-wrapper">
+              <DecryptedText 
+                text={loadingMessage}
+                speed={45}
+                maxIterations={12}
+                sequential={true}
+                revealDirection="center"
+                animateOn="view"
+                className="revealed-text"
+                encryptedClassName="encrypted-text"
+                style={{ 
+                  fontSize: '1.25rem', 
+                  fontWeight: 800, 
+                  letterSpacing: '0.15em',
+                  fontFamily: '"Space Mono", monospace'
+                }}
+              />
+              <div className="loader-sub-line">SYSTEM SECURE • ENCRYPTED TUNNEL ACTIVE</div>
+            </div>
+          )}
         </div>
       )}
     </div>

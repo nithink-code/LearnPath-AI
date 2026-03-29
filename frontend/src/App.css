@@ -109,6 +109,41 @@
   background: rgba(248, 249, 255, 0.72);
 }
 
+.decrypted-loader-wrapper {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.revealed-text {
+  background: linear-gradient(135deg, #ec4899 0%, #7c3aed 45%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 25px rgba(124, 58, 237, 0.4);
+}
+
+.encrypted-text {
+  color: rgba(255, 255, 255, 0.15);
+  filter: blur(1px);
+}
+
+.loader-sub-line {
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 500;
+  animation: loaderPulse 2s infinite ease-in-out;
+}
+
+@keyframes loaderPulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.98); }
+  50% { opacity: 0.6; transform: scale(1); }
+}
+
 /* ── Brand Gradient Utility (also referenced globally) ── */
 .brand-gradient {
   background: linear-gradient(135deg, #ec4899 0%, #7c3aed 45%, #06b6d4 100%);

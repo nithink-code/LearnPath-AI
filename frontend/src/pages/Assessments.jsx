@@ -8,6 +8,32 @@ import './Assessments.css';
 
 loader.config({ monaco });
 
+// Define custom theme for Monaco
+const defineCustomTheme = (monacoInstance) => {
+  monacoInstance.editor.defineTheme('learnpath-dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'comment', foreground: '64748b', fontStyle: 'italic' },
+      { token: 'keyword', foreground: 'a78bfa' },
+      { token: 'string', foreground: '06b6d4' },
+      { token: 'number', foreground: 'f59e0b' },
+      { token: 'operator', foreground: '7c3aed' },
+      { token: 'function', foreground: '3b82f6' },
+    ],
+    colors: {
+      'editor.background': '#0b0e1c',
+      'editor.foreground': '#cbd5e1',
+      'editorCursor.foreground': '#7c3aed',
+      'editor.lineHighlightBackground': '#1e293b50',
+      'editorLineNumber.foreground': '#475569',
+      'editor.selectionBackground': '#7c3aed40',
+      'editorIndentGuide.background': '#1e293b',
+      'editorIndentGuide.activeBackground': '#7c3aed',
+    }
+  });
+};
+
 const API_BASE = 'http://localhost:3000';
 const QUIZ_DRAFT_KEY = 'assessments_quiz_draft_v1';
 const CODE_DRAFT_KEY = 'assessments_code_draft_v1';
@@ -350,6 +376,10 @@ export default function Assessments({ theme = 'dark' }) {
   const [running, setRunning]   = useState(false);
   const [submitResult, setSubmitResult] = useState(null);
 
+  useEffect(() => {
+    loader.init().then(defineCustomTheme);
+  }, []);
+
   const q = quizQuestions[current] || quizQuestions[0];
 
   /* Quiz handlers */
@@ -590,28 +620,46 @@ export default function Assessments({ theme = 'dark' }) {
           </div>
 
           {/* Editor panel */}
-          <div className="code-editor-panel">
-            <div className="editor-topbar">
-              <select className="lang-select" value={language.value} onChange={handleLanguageChange}>
-                {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-              </select>
-              <div className="editor-btns">
-                <button className="btn-run" onClick={handleRun} disabled={running}>
-                  {running ? 'Running...' : 'Run'}
+          <div className="code-editor-panel premium-editor-window">
+            <div className="editor-window-header">
+              <div className="window-controls">
+                <span className="dot dot-close"></span>
+                <span className="dot dot-minimize"></span>
+                <span className="dot dot-expand"></span>
+              </div>
+              <div className="editor-header-center">
+                <select className="lang-select-premium" value={language.value} onChange={handleLanguageChange}>
+                  {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                </select>
+              </div>
+              <div className="editor-btns-premium">
+                <button className="btn-run-premium" onClick={handleRun} disabled={running}>
+                  {running ? '...' : 'Run'}
                 </button>
-                <button className="btn-submit" onClick={handleSubmit} disabled={running}>
-                  {running ? 'Submitting...' : 'Submit'}
+                <button className="btn-submit-premium" onClick={handleSubmit} disabled={running}>
+                  {running ? '...' : 'Submit'}
                 </button>
               </div>
             </div>
-            <Editor
-              height="380px"
-              language={language.monaco}
-              theme={theme === 'light' ? 'light' : 'vs-dark'}
-              value={code}
-              onChange={(val) => setCode(val)}
-              options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 12 } }}
-            />
+            <div className="monaco-editor-container">
+              <Editor
+                height="400px"
+                language={language.monaco}
+                theme={theme === 'light' ? 'light' : 'learnpath-dark'}
+                value={code}
+                onChange={(val) => setCode(val)}
+                options={{ 
+                  fontSize: 14, 
+                  minimap: { enabled: false }, 
+                  scrollBeyondLastLine: false, 
+                  padding: { top: 16 },
+                  fontFamily: 'JetBrains Mono, Courier New, monospace',
+                  smoothScrolling: true,
+                  cursorBlinking: 'smooth',
+                  cursorSmoothCaretAnimation: 'on'
+                }}
+              />
+            </div>
             {(output || submitResult) && (
               <div className="code-output">
                 {submitResult && submitResult.status === 'Accepted' ? (

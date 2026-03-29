@@ -31,7 +31,7 @@
   stroke-linejoin: round;
   stroke-dasharray: 1000;
   stroke-dashoffset: 1000;
-  animation: sllReveal 0.6s ease forwards;
+  animation: sllReveal 1.8s ease forwards;
   opacity: 0;
 }
 
@@ -51,21 +51,21 @@ body.theme-dark .sll-path {
 }
 
 /* ── Staggered delays for each path ── */
-.sll-p1  { animation-delay: 0.0s; }
-.sll-p2  { animation-delay: 0.02s; }
-.sll-p3  { animation-delay: 0.04s; }
-.sll-p4  { animation-delay: 0.06s; }
-.sll-p5  { animation-delay: 0.08s; }
-.sll-p6  { animation-delay: 0.1s; }
-.sll-p7  { animation-delay: 0.12s; }
-.sll-p8  { animation-delay: 0.14s; }
-.sll-p9  { animation-delay: 0.16s; }
-.sll-p10 { animation-delay: 0.18s; }
-.sll-p11 { animation-delay: 0.2s; }
-.sll-p12 { animation-delay: 0.22s; }
-.sll-p13 { animation-delay: 0.24s; }
-.sll-p14 { animation-delay: 0.26s; }
-.sll-p15 { animation-delay: 0.3s; }
+.sll-p1  { animation-delay: 0.1s; }
+.sll-p2  { animation-delay: 0.15s; }
+.sll-p3  { animation-delay: 0.2s; }
+.sll-p4  { animation-delay: 0.25s; }
+.sll-p5  { animation-delay: 0.3s; }
+.sll-p6  { animation-delay: 0.35s; }
+.sll-p7  { animation-delay: 0.4s; }
+.sll-p8  { animation-delay: 0.45s; }
+.sll-p9  { animation-delay: 0.5s; }
+.sll-p10 { animation-delay: 0.55s; }
+.sll-p11 { animation-delay: 0.6s; }
+.sll-p12 { animation-delay: 0.65s; }
+.sll-p13 { animation-delay: 0.7s; }
+.sll-p14 { animation-delay: 0.75s; }
+.sll-p15 { animation-delay: 0.85s; }
 
 @keyframes sllReveal {
   0%   { stroke-dashoffset: 1000; opacity: 0; }
