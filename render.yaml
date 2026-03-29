@@ -27,13 +27,12 @@ services:
         sync: false
 
   # Frontend: React Vite Static Site
-  - type: static
+  - type: static_site
     name: learnpath-frontend
-    env: static
     plan: free
     region: ohio
     buildCommand: npm install && npm run build
-    staticPublishDir: dist
+    publishDir: dist
     rootDir: frontend
     envVars:
       # Use the public URL of your backend service here.
