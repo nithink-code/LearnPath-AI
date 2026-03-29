@@ -16,8 +16,8 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="navbar">
-      <Link to="/" className="navbar-logo" style={{ textDecoration: "none" }}>
+    <>
+      <Link to="/" className="navbar-logo-corner" style={{ textDecoration: "none" }}>
         <img src="/logo.png" alt="LearnPath AI" className="logo-icon" />
         <span className="brand-gradient">LearnPath AI</span>
       </Link>
@@ -37,6 +37,7 @@ const Navbar = () => {
 
       <div className="navbar-actions">
 
+      <div className="navbar-actions-corner">
         <SignedOut>
           <SignInButton mode="modal">
             <button className="btn-signin">Sign In</button>
@@ -46,7 +47,7 @@ const Navbar = () => {
           <UserButton afterSignOutUrl="/" />
         </SignedIn>
       </div>
-    </nav>
+    </>
   );
 };
 

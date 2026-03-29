@@ -203,6 +203,7 @@ const AiAssistant = () => {
           Submit at least one quiz or coding challenge, then click "Analyze My Skillset".
         </div>
       )}
+
     </div>
   );
 };

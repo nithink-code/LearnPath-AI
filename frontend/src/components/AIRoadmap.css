@@ -1,0 +1,223 @@
+.ai-roadmap {
+  --primary-glow: #a855f7;
+  --secondary-glow: #6366f1;
+  --dark-bg: #030303;
+  --inactive-border: rgba(255, 255, 255, 0.1);
+  --inactive-line: rgba(255, 255, 255, 0.1);
+  --label: #f4f4ff;
+  --muted: #9ca3af;
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+
+  position: relative;
+  margin: 3rem auto;
+  width: min(1200px, calc(100% - 3rem));
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(700px 220px at 20% 5%, rgba(99, 102, 241, 0.12), transparent 70%),
+    radial-gradient(700px 240px at 80% 95%, rgba(168, 85, 247, 0.1), transparent 70%),
+    var(--dark-bg);
+  padding: clamp(2rem, 4vw, 4rem);
+  overflow: hidden;
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  z-index: 1;
+}
+
+/* Mouse Spotlight Effect */
+.ai-roadmap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    circle at var(--mouse-x) var(--mouse-y),
+    rgba(168, 85, 247, 0.15) 0%,
+    transparent 50%
+  );
+  transition: opacity 300ms ease;
+}
+
+.ai-roadmap__header {
+  max-width: 800px;
+  margin: 0 auto 3rem;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+}
+
+.ai-roadmap__header h2 {
+  margin: 0;
+  color: var(--label);
+  letter-spacing: 0.15em;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.ai-roadmap__header p {
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+  line-height: 1.6;
+}
+
+.roadmap-container {
+  position: relative;
+  min-height: 500px;
+  width: min(1000px, 100%);
+  margin: 0 auto;
+  z-index: 5;
+}
+
+/* SVG Flow Styling */
+.connector-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.line-base {
+  fill: none;
+  stroke: var(--inactive-line);
+  stroke-width: 2;
+  stroke-dasharray: 1 6;
+  stroke-linecap: round;
+}
+
+.line-active {
+  fill: none;
+  stroke: url(#roadmap-signal);
+  stroke-width: 3;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px var(--primary-glow));
+}
+
+@keyframes drawPath {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Card Styling */
+.step-card {
+  position: absolute;
+  width: 240px;
+  min-height: 140px;
+  border-radius: 18px;
+  border: 1px solid var(--inactive-border);
+  background: rgba(15, 15, 20, 0.8);
+  backdrop-filter: blur(12px);
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.8rem;
+  text-align: center;
+  padding: 1.5rem;
+  z-index: 10;
+  transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.step-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.step-card.is-active {
+  color: #fff;
+  border-color: var(--primary-glow);
+  background: rgba(168, 85, 247, 0.05);
+  box-shadow: 
+    0 0 20px rgba(168, 85, 247, 0.2),
+    inset 0 0 15px rgba(168, 85, 247, 0.1);
+  transform: translateY(-5px);
+}
+
+.step-card.active-final {
+  border-color: var(--primary-glow);
+  animation: glowPulse 2s infinite alternate;
+}
+
+@keyframes glowPulse {
+  from {
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.3), inset 0 0 5px rgba(168, 85, 247, 0.1);
+  }
+  to {
+    box-shadow: 0 0 25px rgba(168, 85, 247, 0.6), inset 0 0 15px rgba(168, 85, 247, 0.3);
+  }
+}
+
+.step-card__icon {
+  width: 48px;
+  height: 48px;
+}
+
+.step-card__icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 400ms ease;
+}
+
+.step-card h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Card Positioning (matches standard layout) */
+.step-card--1 {
+  top: 20px;
+  left: 20px;
+}
+
+.step-card--2 {
+  top: 20px;
+  right: 20px;
+}
+
+.step-card--3 {
+  bottom: 20px;
+  right: 20px;
+}
+
+.step-card--4 {
+  bottom: 20px;
+  left: 20px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 900px) {
+  .roadmap-container {
+    min-height: 850px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3rem;
+  }
+
+  .step-card {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+  }
+
+  .connector-lines {
+    display: none;
+  }
+}

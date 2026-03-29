@@ -1,0 +1,234 @@
+.parallax-section {
+  position: relative;
+  min-height: 600px;
+  background: var(--dark-bg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rem 2rem 4rem;
+  z-index: 10;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.parallax-bg-elements {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.parallax-item {
+  position: absolute;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.1), transparent 70%);
+  border-radius: 50%;
+  filter: blur(80px);
+}
+
+.parallax-item--1 {
+  width: 600px;
+  height: 600px;
+  top: -10%;
+  left: -5%;
+}
+
+.parallax-item--2 {
+  width: 500px;
+  height: 500px;
+  bottom: 0%;
+  right: -5%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.08), transparent 70%);
+}
+
+.parallax-visual-container {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.solar-core {
+  position: relative;
+  z-index: 50;
+  text-align: center;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(10, 10, 15, 0.95), #030303);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  box-shadow: 0 0 50px rgba(168, 85, 247, 0.1);
+}
+
+.brain-glow {
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  background: #a855f7;
+  filter: blur(80px);
+  opacity: 0.1;
+  animation: corePulse 4s infinite alternate ease-in-out;
+  z-index: -1;
+}
+
+@keyframes corePulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.05;
+  }
+
+  100% {
+    transform: scale(1.1);
+    opacity: 0.15;
+  }
+}
+
+.core-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: #a855f7;
+  margin-bottom: 0.5rem;
+}
+
+.solar-core h2 {
+  font-size: 1.25rem;
+  color: #fff;
+  line-height: 1.2;
+  font-weight: 800;
+  margin: 0.25rem 0;
+}
+
+.solar-core p {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  max-width: 180px;
+  margin-top: 0.5rem;
+}
+
+/* The Slot-Based Solar Engine */
+.solar-system-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.orbit-line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  z-index: 5;
+  width: 560px;
+  /* 2*280px radius */
+  height: 560px;
+}
+
+.orbit-system-hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  z-index: 100;
+  animation: orbitRotate 25s linear infinite;
+}
+
+@keyframes orbitRotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.planet-slot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  /* Fixed 90-degree spacing using index */
+  transform: rotate(calc(var(--index) * 90deg)) translateY(-280px);
+}
+
+.planet-card-premium {
+  pointer-events: auto;
+  background: rgba(10, 10, 15, 0.98);
+  backdrop-filter: blur(10px);
+  padding: 1rem 1.5rem; /* Balanced padding for vertical layout */
+  border-radius: 20px;   /* More rectangular focus for vertical stack */
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  display: flex;
+  flex-direction: column; /* THE FINAL CENTERING SOLUTION */
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  transition: all 0.3s ease;
+  /* Counter-rotate Hub AND Slot to stay perfectly level */
+  animation: cardLevel 25s linear infinite;
+  min-width: 120px;
+}
+
+.planet-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+@keyframes cardLevel {
+
+  /* Subtract hub rotation and then subtract own slot angle */
+  from {
+    transform: translate(-50%, -50%) rotate(calc(-0deg - (var(--index) * 90deg)));
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(calc(-360deg - (var(--index) * 90deg)));
+  }
+}
+
+.planet-card-premium:hover {
+  border-color: #a855f7;
+  transform: translate(-50%, -50%) scale(1.15) !important;
+}
+
+.planet-icon {
+  font-size: 1.1rem;
+}
+
+.planet-text {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .solar-system-wrap {
+    display: none;
+  }
+}
