@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { clerkMiddleware } from "./middleware/clerkMiddleware.js";
 import assessmentRoutes from "./routes/assessmentRoutes.js";
+import notesRoutes from "./routes/notesRoutes.js";
 import { client, agentOrchestrator } from "./config/aiClient.js";
 
 dotenv.config();
@@ -13,8 +14,9 @@ app.use(cors());
 app.use(express.json());
 app.use(clerkMiddleware());
 
-// Assessment Routes
+// Assessment & Notes Routes
 app.use("/api/assessment", assessmentRoutes);
+app.use("/api/notes", notesRoutes);
 
 // Root Endpoint
 app.get('/', (req, res) => {
@@ -41,7 +43,7 @@ Return JSON in this format:
 `;
 
     const completion = await client.chat.completions.create({
-      model: "zai-org/GLM-4.7-Flash:novita",
+      model: "google/gemini-2.0-flash-lite-preview-02-05:free",
       messages: [{ role: "user", content: systemPrompt }],
     });
 

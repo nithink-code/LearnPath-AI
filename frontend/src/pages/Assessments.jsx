@@ -329,6 +329,7 @@ export default function Assessments({ theme = 'dark' }) {
   const [answers, setAnswers]   = useState(Array.isArray(persistedQuizDraft?.answers) ? persistedQuizDraft.answers : []);
   const [quizDone, setQuizDone] = useState(persistedQuizDraft?.quizDone ?? false);
   const [quizSaved, setQuizSaved] = useState(persistedQuizDraft?.quizSaved ?? false);
+  const [quizCoaching, setQuizCoaching] = useState(null);
 
   // Code editor state
   const initialLanguage = useMemo(
@@ -353,6 +354,51 @@ export default function Assessments({ theme = 'dark' }) {
 
   const q = quizQuestions[current] || quizQuestions[0];
 
+  const renderCoachingPanel = (coaching) => {
+    if (!coaching) return null;
+    const suggestions = Array.isArray(coaching.improvementSuggestions) ? coaching.improvementSuggestions : [];
+    const bestPractices = Array.isArray(coaching.bestPractices) ? coaching.bestPractices : [];
+    const guidedPath = Array.isArray(coaching.guidedPath) ? coaching.guidedPath : [];
+
+    return (
+      <div className="coaching-card">
+        <h3 className="coaching-title">Personalized Improvement Plan</h3>
+        {coaching.summary && <p className="coaching-summary">{coaching.summary}</p>}
+
+        {suggestions.length > 0 && (
+          <div className="coaching-block">
+            <h4>Suggestions</h4>
+            <ul>
+              {suggestions.map((item, idx) => <li key={`s-${idx}`}>{item}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {bestPractices.length > 0 && (
+          <div className="coaching-block">
+            <h4>Best Practices</h4>
+            <ul>
+              {bestPractices.map((item, idx) => <li key={`b-${idx}`}>{item}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {guidedPath.length > 0 && (
+          <div className="coaching-block">
+            <h4>Guided Path</h4>
+            <ol>
+              {guidedPath.map((step, idx) => (
+                <li key={`g-${idx}`}>
+                  <strong>{step.title || `Step ${step.step || idx + 1}`}</strong>: {step.action || step.details || "Continue structured practice."}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   /* Quiz handlers */
   const handleOptionSelect = (i) => { if (!submitted) setSelected(i); };
 
@@ -366,12 +412,17 @@ export default function Assessments({ theme = 'dark' }) {
       if (isSignedIn) {
         try {
           const token = await getToken();
-          await fetch(`${API_BASE}/api/assessment/submit-quiz`, {
+          const res = await fetch(`${API_BASE}/api/assessment/submit-quiz`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ answers: newAnswers.map(String), score: newScore, totalQuestions: quizQuestions.length }),
           });
-          setQuizSaved(true);
+          const data = await res.json();
+          if (res.ok) {
+            setQuizSaved(true);
+            setQuizCoaching(data.coaching || null);
+            localStorage.setItem('learning_activity_updated', 'true');
+          }
         } catch (err) { console.error('Quiz save failed:', err); }
       }
     } else {
@@ -384,7 +435,7 @@ export default function Assessments({ theme = 'dark' }) {
   const handleCheck = () => setSubmitted(true);
   const resetQuiz = () => {
     setCurrent(0); setSelected(null); setSubmitted(false);
-    setScore(0); setAnswers([]); setQuizDone(false); setQuizSaved(false);
+    setScore(0); setAnswers([]); setQuizDone(false); setQuizSaved(false); setQuizCoaching(null);
     localStorage.removeItem(QUIZ_DRAFT_KEY);
   };
 
@@ -403,55 +454,83 @@ export default function Assessments({ theme = 'dark' }) {
     setOutput(null); setSubmitResult(null);
   };
 
-  const handleCodeAction = async (type, e) => {
+  const handleRun = async (e) => {
     if (e) { e.preventDefault(); e.stopPropagation(); }
     if (isProcessingRef.current || executingAction) return;
 
     isProcessingRef.current = true;
-    setExecutingAction(type);
+    setExecutingAction('run');
     setSubmitResult(null);
     setOutput(null);
     
-    if (type === 'run') {
-      setTimeout(() => {
-        const runCases = problem.examples.map((ex, idx) => ({
-          num: idx + 1,
-          input: ex.input,
-          output: ex.output,
-          passed: true,
-        }));
-        setOutput({ testCases: runCases, runtime: '12 ms', type: 'run' });
-        setExecutingAction(null);
-        isProcessingRef.current = false;
-      }, 1200);
-    } else if (type === 'submit') {
-      try {
-        const submitCases = problem.examples.map((ex, idx) => ({
-          num: idx + 1,
-          input: ex.input,
-          output: ex.output,
-          passed: true,
-        }));
-        
-        if (isSignedIn) {
-          const token = await getToken();
-          const res = await fetch(`${API_BASE}/api/assessment/submit-code`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ code, language: language.value, problemTitle: problem.title }),
+    try {
+      // Mock execution for demo
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      const runCases = problem.examples.map((ex, idx) => ({
+        num: idx + 1,
+        input: ex.input,
+        output: ex.output,
+        passed: true,
+      }));
+      setOutput({ testCases: runCases, runtime: '12 ms', type: 'run' });
+    } catch (err) {
+      console.error("Run execution error:", err);
+      setOutput({ error: 'Failed to run tests.', type: 'run' });
+    } finally { 
+      setExecutingAction(null); 
+      isProcessingRef.current = false;
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    if (isProcessingRef.current || executingAction) return;
+
+    isProcessingRef.current = true;
+    setExecutingAction('submit');
+    setSubmitResult(null);
+    setOutput(null);
+    
+    try {
+      const submitCases = problem.examples.map((ex, idx) => ({
+        num: idx + 1,
+        input: ex.input,
+        output: ex.output,
+        passed: true,
+      }));
+      
+      if (isSignedIn) {
+        const token = await getToken();
+        const res = await fetch(`${API_BASE}/api/assessment/submit-code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ code, language: language.value, problemTitle: problem.title }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setSubmitResult({
+            status: 'Accepted',
+            runtime: '68 ms',
+            memory: '42.3 MB',
+            beats: '87%',
+            saved: true,
+            testCases: submitCases,
+            type: 'submit',
+            coaching: data.coaching || null,
           });
-          const data = await res.json();
-          if (res.ok) setSubmitResult({ status: 'Accepted', runtime: '68 ms', memory: '42.3 MB', beats: '87%', saved: true, testCases: submitCases, type: 'submit' });
-          else        setSubmitResult({ status: 'Error', error: data.error || 'Submission failed', type: 'submit' });
+          localStorage.setItem('learning_activity_updated', 'true');
         } else {
-          setSubmitResult({ status: 'Accepted', runtime: '68 ms', memory: '42.3 MB', beats: '87%', saved: false, testCases: submitCases, type: 'submit' });
+          setSubmitResult({ status: 'Error', error: data.error || 'Submission failed', type: 'submit' });
         }
-      } catch (err) {
-        setSubmitResult({ status: 'Error', error: 'Network error' });
-      } finally { 
-        setExecutingAction(null); 
-        isProcessingRef.current = false;
+      } else {
+        setSubmitResult({ status: 'Accepted', runtime: '68 ms', memory: '42.3 MB', beats: '87%', saved: false, testCases: submitCases, type: 'submit' });
       }
+    } catch (err) {
+      console.error("Submission error:", err);
+      setSubmitResult({ status: 'Error', error: 'Network error or system timeout', type: 'submit' });
+    } finally { 
+      setExecutingAction(null); 
+      isProcessingRef.current = false;
     }
   };
 
@@ -516,19 +595,20 @@ export default function Assessments({ theme = 'dark' }) {
               <p style={{ color: '#9ca3af' }}>You answered {score} out of {quizQuestions.length} correctly.</p>
               {quizSaved  && <p style={{ color: '#22c55e', fontSize: '0.9rem' }}>Saved to your profile</p>}
               {!isSignedIn && <p style={{ color: '#f59e0b', fontSize: '0.9rem' }}>Sign in to save your results</p>}
+              {renderCoachingPanel(quizCoaching)}
               <button className="btn-primary" onClick={resetQuiz} style={{ marginTop: '1rem' }}>Retry Quiz</button>
             </div>
           ) : (
             <>
-              <div className="quiz-progress-bar">
-                <div className="quiz-progress-fill" style={{ width: `${(current / quizQuestions.length) * 100}%` }} />
-              </div>
-              <div className="quiz-meta">
-                <span className="quiz-cat">{q.category}</span>
-                <span className="quiz-diff" style={{ color: DIFF_COLORS[q.difficulty] }}>{q.difficulty}</span>
-                <span className="quiz-counter">{current + 1} / {quizQuestions.length}</span>
-              </div>
               <div className="quiz-card">
+                <div className="quiz-progress-bar">
+                  <div className="quiz-progress-fill" style={{ width: `${(current / quizQuestions.length) * 100}%` }} />
+                </div>
+                <div className="quiz-meta">
+                  <span className="quiz-cat">{q.category}</span>
+                  <span className="quiz-diff" style={{ color: DIFF_COLORS[q.difficulty] }}>{q.difficulty}</span>
+                  <span className="quiz-counter">{current + 1} / {quizQuestions.length}</span>
+                </div>
                 <p className="quiz-question">{q.question}</p>
                 <div className="quiz-options">
                   {q.options.map((opt, i) => {
@@ -611,8 +691,8 @@ export default function Assessments({ theme = 'dark' }) {
                   key="code-run-btn"
                   type="button"
                   className="btn-run"
-                  onClick={(e) => handleCodeAction('run', e)}
-                  disabled={executingAction === 'run'}
+                  onClick={handleRun}
+                  disabled={!!executingAction}
                 >
                   {executingAction === 'run' ? 'Running...' : 'Run'}
                 </button>
@@ -620,8 +700,8 @@ export default function Assessments({ theme = 'dark' }) {
                   key="code-submit-btn"
                   type="button"
                   className="btn-submit"
-                  onClick={(e) => handleCodeAction('submit', e)}
-                  disabled={executingAction === 'submit'}
+                  onClick={handleSubmit}
+                  disabled={!!executingAction}
                 >
                   {executingAction === 'submit' ? 'Submitting...' : 'Submit'}
                 </button>
@@ -675,6 +755,8 @@ export default function Assessments({ theme = 'dark' }) {
                         )}
                       </div>
                     )}
+
+                    {renderCoachingPanel(submitResult.coaching)}
                   </div>
                 ) : output && output.testCases ? (
                   <div className="test-result run-result">
@@ -719,7 +801,7 @@ export default function Assessments({ theme = 'dark' }) {
         </div>
       )}
 
-      <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ marginTop: '3rem', marginBottom: '4rem', display: 'flex', justifyContent: 'center' }}>
         <button className="btn-secondary" onClick={() => navigate('/ai-assistant')}>
           Analyze Your Skillset Level
         </button>

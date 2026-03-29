@@ -1,11 +1,40 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Dynamic Typography */
+  --font-display: 'Trap', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Editorial Palette — Dark Mode (Default) */
+  --paper: #050508;
+  --paper-soft: #0a0a0e;
+  --paper-extreme: #000000;
+  
+  --ink: #ffffff;
+  --ink-soft: #e2e8f0;
+  --ink-muted: #64748b;
+  
+  --border: rgba(255, 255, 255, 0.08);
+  --border-ink: rgba(255, 255, 255, 0.2);
+  
+  --amber: #f59e0b;
+  --amber-dark: #d97706;
+  --amber-pale: rgba(245, 158, 11, 0.1);
+  
+  --rose: #f43f5e;
+  --forest: #10b981;
+
+  /* UI Tokens */
+  --radius: 12px;
+  --radius-sm: 6px;
+  --shadow-float: 0 20px 50px rgba(0, 0, 0, 0.5);
+
+  font-family: var(--font-body);
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #000000;
+  color: var(--ink-soft);
+  background-color: var(--paper);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -18,7 +47,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   width: 100%;
-  background-color: #000000;
+  background-color: #000;
   overflow-x: hidden;
 }
 
@@ -39,15 +68,11 @@ body {
 .theme-dark {
   background: radial-gradient(circle at 50% -20%, #1a1a2e 0%, #000 80%);
   background-color: #000;
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 50px 50px;
 }
 
 .theme-light {
   background-color: #ffffff !important;
-  background-image: 
+  background-image:
     linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px) !important;
   background-size: 40px 40px !important;
@@ -72,12 +97,12 @@ body {
   left: 10%;
   width: 2px;
   height: 140%;
-  background: linear-gradient(180deg, 
-    rgba(255, 255, 255, 0) 0%, 
-    rgba(255, 255, 255, 0.15) 30%, 
-    rgba(255, 255, 255, 0.25) 50%, 
-    rgba(255, 255, 255, 0.15) 70%, 
-    rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.15) 30%,
+      rgba(255, 255, 255, 0.25) 50%,
+      rgba(255, 255, 255, 0.15) 70%,
+      rgba(255, 255, 255, 0) 100%);
   filter: blur(60px);
   pointer-events: none;
   z-index: 0;
@@ -91,12 +116,12 @@ body {
   right: 10%;
   width: 2px;
   height: 160%;
-  background: linear-gradient(180deg, 
-    rgba(255, 255, 255, 0) 0%, 
-    rgba(255, 255, 255, 0.1) 30%, 
-    rgba(255, 255, 255, 0.2) 50%, 
-    rgba(255, 255, 255, 0.1) 70%, 
-    rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.1) 30%,
+      rgba(255, 255, 255, 0.2) 50%,
+      rgba(255, 255, 255, 0.1) 70%,
+      rgba(255, 255, 255, 0) 100%);
   filter: blur(80px);
   pointer-events: none;
   z-index: 0;
@@ -105,11 +130,13 @@ body {
 
 .bg-beam {
   position: absolute;
-  width: 4px; /* Increased width */
-  background: linear-gradient(180deg, 
-    transparent 0%, 
-    rgba(255, 255, 255, 0.25) 50%, /* Increased opacity */
-    transparent 100%);
+  width: 4px;
+  /* Increased width */
+  background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.25) 50%,
+      /* Increased opacity */
+      transparent 100%);
   filter: blur(50px);
   pointer-events: none;
   z-index: 0;
@@ -120,7 +147,8 @@ body {
   left: 48%;
   height: 100vh;
   width: 6px;
-  opacity: 1; /* Maximum visibility */
+  opacity: 1;
+  /* Maximum visibility */
 }
 
 .bg-beam-2 {

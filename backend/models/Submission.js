@@ -29,6 +29,10 @@ const submissionSchema = new mongoose.Schema({
   },
   // Quiz fields
   totalQuestions: Number,
+  aiCoaching: {
+    type: Object,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
