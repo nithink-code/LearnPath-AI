@@ -911,74 +911,67 @@
 
 .status-main {
   display: flex;
-  align-items: baseline;
-  gap: 1.25rem;
-}
-
-.tc-solved-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.32rem 0.62rem;
-  border-radius: 8px;
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.35);
-  color: #22c55e;
-  font-size: 0.86rem;
-  font-weight: 600;
-  line-height: 1;
-}
-
-.tc-solved-icon {
-  color: #22c55e;
-  font-size: 0.92rem;
-  font-weight: 700;
-  line-height: 1;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .tc-runtime {
-  color: #6b7280;
-  font-size: 0.95rem;
-  font-weight: 500;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .tc-passed-pill {
-  font-weight: 500;
-  font-size: 0.95rem;
+  padding: 0.45rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.tc-passed-pill.all-passed {
+  border-color: rgba(34, 197, 94, 0.3);
   color: #22c55e;
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.tc-passed-pill.some-failed {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
 }
 
 .sr-stats {
   margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  column-gap: 1.25rem;
-  row-gap: 0.55rem;
-}
-
-.sr-stats span {
-  display: inline-flex;
-  align-items: baseline;
+  column-gap: 2rem;
+  row-gap: 0.75rem;
+  color: #94a3b8;
+  font-size: 0.9rem;
 }
 
 .tc-cases-row {
   display: flex;
-  gap: 1.5rem;
-  margin: 1.5rem 0 2rem;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
   flex-wrap: wrap;
 }
 
 .tc-case-btn {
-  background: transparent;
-  border: none;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: #94a3b8;
-  padding: 0.45rem 1rem;
+  padding: 0.5rem 1rem;
   border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 0.88rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -986,57 +979,82 @@
   gap: 0.65rem;
 }
 
+.tc-case-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
 .tc-case-btn.active {
-  background: #2f2f2f;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
   color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .tc-case-icon {
-  font-size: 0.85rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
+.tc-detail-box {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 .tc-detail-section {
-  margin-bottom: 2rem; /* More space between Input and Output sections */
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
 .tc-detail-label {
-  color: #94a3b8;
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-bottom: 0.75rem;
-  display: block;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.code-font {
+  font-family: 'Fira Code', 'JetBrains Mono', 'Source Code Pro', monospace;
+}
+
+.tc-val-text {
+  background: #0d0e12;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  color: #e2e8f0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 600px) {
-  .tc-detail-label {
-    font-size: 0.8rem;
-    margin-bottom: 0.5rem;
+  .tc-detail-box {
+    padding: 1rem;
+    gap: 1.25rem;
   }
-
-  .tc-detail-section {
-    margin-bottom: 1.25rem;
-  }
-
-  .tc-var-label {
-    font-size: 0.75rem;
-  }
-
+  
   .tc-val-text {
     font-size: 0.85rem;
+    padding: 0.75rem;
   }
-}
-
-.tc-detail-val {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  padding: 1.25rem;
-  min-height: 60px;
-  max-height: 180px; /* Allow more height before internal scrolling */
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
 }
 
 /* Individual box scrollbar */

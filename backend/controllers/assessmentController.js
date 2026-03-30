@@ -31,6 +31,20 @@ const buildProgressSnapshot = (progress) => ({
   lastSolvedDate: progress?.lastSolvedDate || null,
 });
 
+const withTimeout = async (promise, timeoutMs, timeoutMessage = "Operation timed out") => {
+  let timer;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+};
+
 const generateSubmissionCoaching = async (userId, payload, progress, submissionId = null) => {
   const profileDoc = await UserProfile.findOne({ userId });
   const profile = toSafeProfile(profileDoc);
@@ -355,7 +369,7 @@ export const getProgress = async (req, res) => {
 export const submitCode = async (req, res) => {
   try {
     const userId = req.auth.userId;
-    const { code, language, problemTitle } = req.body;
+    const { code, language, problemTitle, status } = req.body;
 
     if (!code || !language || !problemTitle) {
       return res.status(400).json({ error: 'code, language, and problemTitle are required' });
@@ -367,7 +381,7 @@ export const submitCode = async (req, res) => {
       code,
       language,
       problemTitle,
-      status: 'accepted',
+      status: status || 'accepted',
     });
 
     // Update progress
@@ -606,22 +620,32 @@ export const getUserProfile = async (req, res) => {
 export const getAiAnalysis = async (req, res) => {
   try {
     const userId = req.auth.userId;
+    const forceRefresh = req.query.refresh === 'true';
 
-    // Get absolute latest submission (coding or quiz)
-    const latestSubmissionDoc = await Submission.findOne({ userId }).sort({ createdAt: -1 });
-    const submissionCount = await Submission.countDocuments({ userId });
-    const progress = await Progress.findOne({ userId });
-    const profile = await UserProfile.findOne({ userId });
+    const [latestSubmission, progress, profile] = await Promise.all([
+      Submission.findOne({ userId })
+        .sort({ createdAt: -1 })
+        .select("submissionType language problemTitle code score totalQuestions answers aiCoaching createdAt")
+        .lean(),
+      Progress.findOne({ userId })
+        .select("totalSolved dailyStreak lastSolvedDate")
+        .lean(),
+      UserProfile.findOne({ userId })
+        .select("goal role experience stack hoursPerWeek")
+        .lean(),
+    ]);
 
-    if (!latestSubmissionDoc) {
+    if (!latestSubmission) {
       return res.json({
         noSubmissions: true,
         message: "No analysis found. Complete the skill assessment to analyze your improvement areas."
       });
     }
 
+    const submissionCountPromise = Submission.countDocuments({ userId });
+
     const safeProfile = toSafeProfile(profile);
-    const latest = latestSubmissionDoc.toJSON();
+    const latest = latestSubmission;
     const weakAreas = [];
 
     if (latest.submissionType === "coding") {
@@ -664,19 +688,41 @@ export const getAiAnalysis = async (req, res) => {
         answersCount: Array.isArray(latest.answers) ? latest.answers.length : 0,
       };
 
-    // Check if we already have cached coaching for this latest submission
-    let coaching = latestSubmissionDoc.aiCoaching;
-    const forceRefresh = req.query.refresh === 'true';
+    // Check if we already have cached coaching for this latest submission.
+    // If generation is slow, respond quickly with deterministic summary and refresh cache in background.
+    let coaching = latest.aiCoaching;
+    const progressSnapshot = buildProgressSnapshot(progress);
+    const aiTimeoutMs = Number(process.env.AI_ANALYSIS_TIMEOUT_MS || 2200);
     
     if (!coaching || forceRefresh) {
-      const coachingResult = await agentOrchestrator.generateSubmissionCoaching(safeProfile, {
-        ...coachingPayload,
-        progress: buildProgressSnapshot(progress),
-      });
-      coaching = coachingResult?.coaching || {};
-      
-      // Cache it for next time
-      Submission.findByIdAndUpdate(latestSubmissionDoc._id, { aiCoaching: coaching }).catch(e => console.error("Cache update failed:", e));
+      try {
+        const coachingResult = await withTimeout(
+          agentOrchestrator.generateSubmissionCoaching(safeProfile, {
+            ...coachingPayload,
+            progress: progressSnapshot,
+          }),
+          aiTimeoutMs,
+          "AI coaching timeout"
+        );
+        coaching = coachingResult?.coaching || {};
+
+        if (coaching && latest._id) {
+          Submission.findByIdAndUpdate(latest._id, { aiCoaching: coaching }).catch(e => console.error("Cache update failed:", e));
+        }
+      } catch {
+        coaching = coaching || {};
+
+        // Refresh in the background so subsequent requests are faster.
+        agentOrchestrator.generateSubmissionCoaching(safeProfile, {
+          ...coachingPayload,
+          progress: progressSnapshot,
+        }).then((coachingResult) => {
+          const freshCoaching = coachingResult?.coaching;
+          if (freshCoaching && latest._id) {
+            Submission.findByIdAndUpdate(latest._id, { aiCoaching: freshCoaching }).catch(e => console.error("Cache update failed:", e));
+          }
+        }).catch((e) => console.error("Background coaching refresh failed:", e));
+      }
     }
  
     const dynamicImprovementAreas = buildDynamicImprovementAreas(latest, focusedWeakAreas);
@@ -689,6 +735,8 @@ export const getAiAnalysis = async (req, res) => {
           "Practice 2 follow-up problems with similar patterns.",
           "Write a short reflection on mistakes before your next submission."
         ]);
+
+    const submissionCount = await submissionCountPromise;
 
     res.json({
       summary: coaching.summary || buildDynamicSummary(latest, focusedWeakAreas),
@@ -734,6 +782,126 @@ export const aiChat = async (req, res) => {
     res.json({ response: result.response });
   } catch (error) {
     console.error("aiChat error:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Execute Code (proxy to Piston API — no auth required)
+export const executeCode = async (req, res) => {
+  try {
+    const { language, version, files } = req.body;
+    if (!language || !files || !Array.isArray(files)) {
+      return res.status(400).json({ error: "language and files are required" });
+    }
+
+    const pistonUrl = process.env.PISTON_API_URL || "https://emkc.org/api/v2/piston/execute";
+    const sourceCode = String(files?.[0]?.content || "");
+
+    const mapLanguageToJudge0Id = (lang) => {
+      const normalized = String(lang || "").toLowerCase();
+      const map = {
+        python: 71,
+        java: 62,
+        "c++": 54,
+        cpp: 54,
+        javascript: 63,
+        typescript: 74,
+      };
+      return map[normalized] || null;
+    };
+
+    const toPistonLikeResponse = (judge0Data) => {
+      const decodeBase64 = (value) => {
+        if (value === null || value === undefined || value === "") return "";
+        try {
+          return Buffer.from(String(value), "base64").toString("utf8");
+        } catch {
+          return String(value);
+        }
+      };
+
+      const compileStderr = decodeBase64(judge0Data?.compile_output);
+      const decodedStderr = decodeBase64(judge0Data?.stderr);
+      const decodedMessage = decodeBase64(judge0Data?.message);
+      const decodedStdout = decodeBase64(judge0Data?.stdout);
+      const runtimeStderr = decodedStderr || decodedMessage || "";
+      const runtimeSeconds = Number.parseFloat(judge0Data?.time);
+
+      return {
+        language,
+        version: version || "*",
+        compile: compileStderr
+          ? {
+              stdout: "",
+              stderr: compileStderr,
+              output: compileStderr,
+              code: 1,
+            }
+          : null,
+        run: {
+          stdout: decodedStdout,
+          stderr: runtimeStderr,
+          output: `${decodedStdout}${runtimeStderr || ""}`,
+          code: judge0Data?.status?.id,
+          time: Number.isFinite(runtimeSeconds) ? runtimeSeconds : null,
+        },
+      };
+    };
+
+    const callJudge0 = async () => {
+      const languageId = mapLanguageToJudge0Id(language);
+      if (!languageId) {
+        return res.status(400).json({ error: `Unsupported language for fallback executor: ${language}` });
+      }
+
+      const judge0Res = await fetch("https://ce.judge0.com/submissions/?base64_encoded=true&wait=true", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          language_id: languageId,
+          source_code: Buffer.from(sourceCode, "utf8").toString("base64"),
+          stdin: Buffer.from("", "utf8").toString("base64"),
+        }),
+      });
+
+      if (!judge0Res.ok) {
+        const text = await judge0Res.text();
+        return res.status(judge0Res.status).json({ error: `Judge0 error: ${judge0Res.status} — ${text.slice(0, 250)}` });
+      }
+
+      const judge0Data = await judge0Res.json();
+      return res.json(toPistonLikeResponse(judge0Data));
+    };
+
+    // Try configured Piston first. If blocked by public whitelist policy, fall back to Judge0.
+    try {
+      const pistonRes = await fetch(pistonUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language, version: version || "*", files }),
+      });
+
+      if (pistonRes.ok) {
+        const data = await pistonRes.json();
+        return res.json(data);
+      }
+
+      const text = await pistonRes.text();
+      const blockedByWhitelist =
+        pistonRes.status === 401 &&
+        /whitelist only|public piston api/i.test(text || "");
+
+      if (blockedByWhitelist) {
+        return await callJudge0();
+      }
+
+      return res.status(pistonRes.status).json({ error: `Piston error: ${pistonRes.status} — ${text.slice(0, 250)}` });
+    } catch {
+      // Network or upstream issues: fall back to Judge0.
+      return await callJudge0();
+    }
+  } catch (error) {
+    console.error("executeCode proxy error:", error);
     res.status(500).json({ error: error.message });
   }
 };

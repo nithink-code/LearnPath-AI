@@ -8,6 +8,8 @@ export class AgentOrchestrator {
             .split(",")
             .map((item) => item.trim())
             .filter(Boolean);
+        this.requestTimeoutMs = Number(process.env.OPENROUTER_TIMEOUT_MS || 5000);
+        this.chatRequestTimeoutMs = Number(process.env.OPENROUTER_CHAT_TIMEOUT_MS || 6500);
         this.openRouterOptions = {
             headers: {
                 "HTTP-Referer": "https://learnpath-ai.xyz",
@@ -25,19 +27,39 @@ export class AgentOrchestrator {
         return msg.includes("no endpoints found") || msg.includes("404") || msg.includes("not found");
     }
 
-    async requestCompletion(messages, purpose = "request", extraModels = []) {
+    async requestCompletion(messages, purpose = "request", extraModels = [], options = {}) {
         const attempts = this.buildModelAttempts(extraModels);
         let completion;
         let lastError;
+        const timeoutMs = Number(options.timeoutMs || this.requestTimeoutMs);
+        const temperature = typeof options.temperature === "number" ? options.temperature : 0.25;
+
+        const withTimeout = async (promise, ms, label) => {
+            let timer;
+            try {
+                return await Promise.race([
+                    promise,
+                    new Promise((_, reject) => {
+                        timer = setTimeout(() => reject(new Error(`${label} timeout after ${ms}ms`)), ms);
+                    })
+                ]);
+            } finally {
+                if (timer) clearTimeout(timer);
+            }
+        };
 
         for (const modelId of attempts) {
             try {
                 this.logActivity(`Attempting ${purpose} with: ${modelId}`);
-                completion = await this.client.chat.completions.create({
-                    model: modelId,
-                    messages,
-                    temperature: 0.3,
-                }, this.openRouterOptions);
+                completion = await withTimeout(
+                    this.client.chat.completions.create({
+                        model: modelId,
+                        messages,
+                        temperature,
+                    }, this.openRouterOptions),
+                    timeoutMs,
+                    `${purpose}:${modelId}`
+                );
 
                 if (completion?.choices?.[0]?.message?.content) {
                     return completion;
@@ -180,16 +202,71 @@ export class AgentOrchestrator {
         };
     }
 
+    buildFallbackChatResponse(userPrompt = "", profile = {}, submissions = []) {
+        const prompt = String(userPrompt || "").trim();
+        const lower = prompt.toLowerCase();
+        const latest = submissions?.[0];
+
+        if (!prompt) {
+            return "Ask any technical question and I will give a direct, practical answer. Example: 'How do I debug a 500 error in Express?'";
+        }
+
+        // Targeted deterministic answers for common coding questions.
+        if (/\btwo\s*sum\b/.test(lower)) {
+            return [
+                "Use a hash map for O(n) time:",
+                "1. Iterate nums once.",
+                "2. For each value x, compute need = target - x.",
+                "3. If need exists in map, return [map.get(need), i].",
+                "4. Otherwise store map.set(x, i).",
+                "JavaScript:\nfunction twoSum(nums, target) { const m = new Map(); for (let i = 0; i < nums.length; i++) { const need = target - nums[i]; if (m.has(need)) return [m.get(need), i]; m.set(nums[i], i); } return []; }"
+            ].join("\n");
+        }
+
+        if (/\b(binary search|bs)\b/.test(lower)) {
+            return [
+                "Binary search template (sorted array):",
+                "1. Set l=0, r=n-1.",
+                "2. While l<=r, mid=l+Math.floor((r-l)/2).",
+                "3. If nums[mid]===target return mid.",
+                "4. If nums[mid]<target set l=mid+1 else r=mid-1.",
+                "5. Return -1 when not found."
+            ].join("\n");
+        }
+
+        const looksLikeError = /(error|exception|trace|failed|cannot|undefined|null pointer|timeout|status\s*\d{3})/i.test(prompt);
+        if (looksLikeError) {
+            const lines = prompt.split("\n").map((l) => l.trim()).filter(Boolean);
+            const headline = lines[0]?.slice(0, 160) || "Runtime/compile issue";
+            return [
+                `Detected issue: ${headline}`,
+                "Most likely fixes:",
+                "1. Verify input/argument shape at the failing function boundary.",
+                "2. Confirm env/config values loaded at runtime (URLs, tokens, DB URI).",
+                "3. Add one narrow log before the crash and one after parsing/DB/API call.",
+                "4. If you share the exact stack trace, I can give a file-level patch immediately."
+            ].join("\n");
+        }
+
+        if (/\b(what is|explain|define)\b/.test(lower)) {
+            const topic = prompt.replace(/\s+/g, " ").trim();
+            return [
+                `Short answer: ${topic} is best understood by purpose, mechanism, and trade-offs.`,
+                "Purpose: what problem it solves.",
+                "Mechanism: how it works internally.",
+                "Trade-offs: when to use it vs alternatives.",
+                "If you share the exact concept (e.g., closures, indexing, memoization), I will give a precise explanation with examples."
+            ].join("\n");
+        }
+
+        const latestHint = latest?.problemTitle ? ` Context: latest problem was ${latest.problemTitle}.` : "";
+        return `Direct guidance: break your question into expected output, current output, and constraints, then choose the simplest correct approach first and optimize second.${latestHint} Share one concrete input/output pair and I will provide an exact solution.`;
+    }
+
     async handleChat(messages, profile, submissions) {
         this.logActivity(`Chat request received...`);
 
         const latestUserMessage = [...(messages || [])].reverse().find((msg) => msg?.role === "user")?.content || "";
-        if (this.isOutOfScopeChat(latestUserMessage)) {
-            return {
-                success: true,
-                response: "I can help with skills and technology only. Ask me about coding problems, your stack, interview prep, projects, or how to improve your latest submission."
-            };
-        }
 
         const codingSubmissions = (submissions || []).filter(s => s.submissionType === 'coding');
         const quizSubmissions = (submissions || []).filter(s => s.submissionType === 'quiz');
@@ -202,8 +279,8 @@ export class AgentOrchestrator {
 
         const contextPrompt = `
 You are Lumina, a premium personal AI Mentor. 
-Stay strictly within software engineering, skill development, and technology learning topics.
-If the user asks something outside these topics, politely refuse and redirect to a relevant tech-skill question.
+    Prioritize software engineering, skill development, and technology learning topics.
+    If a user asks a non-technical question, answer briefly and practically, then optionally connect it to productivity or technical growth where relevant.
 Keep responses concise, practical, and under 120 words when possible.
 User Context:
 - Role: ${profile.role}
@@ -225,14 +302,14 @@ IMPORTANT FORMATTING:
             const completion = await this.requestCompletion([
                 { role: "system", content: contextPrompt },
                 ...messages
-            ], "chat", chatPreferredModels);
+            ], "chat", chatPreferredModels, { timeoutMs: this.chatRequestTimeoutMs, temperature: 0.2 });
 
             return { success: true, response: completion.choices[0].message.content };
         } catch (error) {
             console.error("AgentOrchestrator Chat Error:", error);
             return {
                 success: true,
-                response: "I'm having a bit of trouble reaching my top-tier neural cores right now, but I can still answer basic questions. Please try again in a moment for a deeper analysis, or ask me something technical!"
+                response: this.buildFallbackChatResponse(latestUserMessage, profile || {}, submissions || [])
             };
         }
     }

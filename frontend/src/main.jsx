@@ -42,8 +42,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     ) : (
       <ClerkProvider 
         publishableKey={PUBLISHABLE_KEY}
-        afterSignInUrl="/learning-plans?auth=login"
-        afterSignUpUrl="/learning-plans?auth=login"
+        signInFallbackRedirectUrl="/learning-plans?auth=login"
+        signUpFallbackRedirectUrl="/learning-plans?auth=login"
         afterSignOutUrl="/?auth=logout"
         appearance={{
           baseTheme: dark,

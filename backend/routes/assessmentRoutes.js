@@ -4,6 +4,7 @@ import {
   getAssessment,
   submitAssessment,
   getProgress,
+  executeCode,
   submitCode,
   submitQuiz,
   getSubmissions,
@@ -19,6 +20,7 @@ const router = express.Router();
 router.get("/get", requireAuth, getAssessment);
 router.post("/submit", requireAuth, submitAssessment);
 router.get("/progress", requireAuth, getProgress);
+router.post("/execute-code", executeCode);
 router.post("/submit-code", requireAuth, submitCode);
 router.post("/submit-quiz", requireAuth, submitQuiz);
 router.get("/submissions", requireAuth, getSubmissions);

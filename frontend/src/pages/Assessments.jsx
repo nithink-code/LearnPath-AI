@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Editor, { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import ts from 'typescript';
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
@@ -206,6 +207,11 @@ const PROBLEMS = [
       { input: 'nums = [2,7,11,15], target = 9', output: '[0,1]', explanation: 'nums[0] + nums[1] == 9.' },
       { input: 'nums = [3,2,4], target = 6',     output: '[1,2]', explanation: 'nums[1] + nums[2] == 6.' },
     ],
+    testCases: [
+      { input: [[2, 7, 11, 15], 9], expected: [0, 1] },
+      { input: [[3, 2, 4], 6], expected: [1, 2] },
+      { input: [[3, 3], 6], expected: [0, 1] },
+    ],
     constraints: ['2 <= nums.length <= 10^4', '-10^9 <= nums[i] <= 10^9', 'Exactly one valid answer.'],
     code: {
       javascript: `function twoSum(nums, target) {\n  // Write your solution here\n}`,
@@ -221,6 +227,11 @@ const PROBLEMS = [
     examples: [
       { input: 's = "A man, a plan, a canal: Panama"', output: 'true',  explanation: '"amanaplanacanalpanama" is a palindrome.' },
       { input: 's = "race a car"',                    output: 'false', explanation: '"raceacar" is not a palindrome.' },
+    ],
+    testCases: [
+      { input: ["A man, a plan, a canal: Panama"], expected: true },
+      { input: ["race a car"], expected: false },
+      { input: [" "], expected: true },
     ],
     constraints: ['1 <= s.length <= 2 * 10^5', 's consists of printable ASCII characters.'],
     code: {
@@ -238,6 +249,11 @@ const PROBLEMS = [
       { input: 'head = [1,2,3,4,5]', output: '[5,4,3,2,1]', explanation: 'List is reversed.' },
       { input: 'head = [1,2]',       output: '[2,1]',       explanation: 'List is reversed.' },
     ],
+    testCases: [
+      { input: [[1, 2, 3, 4, 5]], expected: [5, 4, 3, 2, 1] },
+      { input: [[1, 2]], expected: [2, 1] },
+      { input: [[]], expected: [] },
+    ],
     constraints: ['Number of nodes in [0, 5000].', '-5000 <= Node.val <= 5000'],
     code: {
       javascript: `// ListNode: function ListNode(val, next) { this.val = val; this.next = next ?? null; }\n\nfunction reverseList(head) {\n  // Write your solution here\n}`,
@@ -253,6 +269,11 @@ const PROBLEMS = [
     examples: [
       { input: 'n = 2', output: '2', explanation: '1+1 or 2 â€” two ways.' },
       { input: 'n = 3', output: '3', explanation: '1+1+1, 1+2, 2+1 â€” three ways.' },
+    ],
+    testCases: [
+      { input: [2], expected: 2 },
+      { input: [3], expected: 3 },
+      { input: [4], expected: 5 },
     ],
     constraints: ['1 <= n <= 45'],
     code: {
@@ -270,6 +291,11 @@ const PROBLEMS = [
       { input: 'nums = [-2,1,-3,4,-1,2,1,-5,4]', output: '6', explanation: 'Subarray [4,-1,2,1] has sum = 6.' },
       { input: 'nums = [1]',                      output: '1', explanation: 'Single element.' },
     ],
+    testCases: [
+      { input: [[-2, 1, -3, 4, -1, 2, 1, -5, 4]], expected: 6 },
+      { input: [[1]], expected: 1 },
+      { input: [[5, 4, -1, 7, 8]], expected: 23 },
+    ],
     constraints: ['1 <= nums.length <= 10^5', '-10^4 <= nums[i] <= 10^4'],
     code: {
       javascript: `function maxSubArray(nums) {\n  // Kadane's Algorithm\n}`,
@@ -286,6 +312,11 @@ const PROBLEMS = [
       { input: 'nums = [-1,0,3,5,9,12], target = 9', output: '4',  explanation: '9 exists at index 4.' },
       { input: 'nums = [-1,0,3,5,9,12], target = 2', output: '-1', explanation: '2 does not exist.' },
     ],
+    testCases: [
+      { input: [[-1, 0, 3, 5, 9, 12], 9], expected: 4 },
+      { input: [[-1, 0, 3, 5, 9, 12], 2], expected: -1 },
+      { input: [[2, 5], 5], expected: 1 },
+    ],
     constraints: ['1 <= nums.length <= 10^4', 'All integers are unique.', '-10^4 <= target <= 10^4'],
     code: {
       javascript: `function search(nums, target) {\n  // O(log n) solution\n}`,
@@ -298,6 +329,307 @@ const PROBLEMS = [
 ];
 
 const DIFF_COLORS = { Easy: '#22c55e', Medium: '#f59e0b', Hard: '#ef4444' };
+
+/* ── Universal Evaluation Engine ── */
+const PISTON_RUNTIME = {
+  python: { language: 'python', version: '3.10.0' },
+  java:   { language: 'java',   version: '15.0.2' },
+  cpp:    { language: 'c++',    version: '10.2.0' },
+};
+const JS_FN  = { 'two-sum':'twoSum','valid-palindrome':'isPalindrome','climbing-stairs':'climbStairs','max-subarray':'maxSubArray','binary-search':'search','reverse-linked-list':'reverseList' };
+const PY_FN  = { 'two-sum':'two_sum','valid-palindrome':'is_palindrome','climbing-stairs':'climb_stairs','max-subarray':'max_sub_array','binary-search':'search','reverse-linked-list':'reverse_list' };
+
+const deepEqual = (a, b) => {
+  if (a === undefined || a === null) return false;
+  if (b === undefined || b === null) return false;
+  if (typeof a === 'number' && typeof b === 'number' && isNaN(a) && isNaN(b)) return true;
+  return JSON.stringify(a) === JSON.stringify(b);
+};
+
+const stripCodeComments = (input = '') => input
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/(^|[^:])\/\/.*$/gm, '$1')
+  .replace(/#.*$/gm, '');
+
+const normalizeCodeForComparison = (input = '') => stripCodeComments(input)
+  .replace(/\s+/g, ' ')
+  .replace(/[{}();,]/g, '')
+  .trim()
+  .toLowerCase();
+
+const isUnmodifiedBoilerplate = (userCode, templateCode) => {
+  if (!userCode || !String(userCode).trim()) return true;
+  if (!templateCode) return false;
+  const normalizedUser = normalizeCodeForComparison(userCode);
+  const normalizedTemplate = normalizeCodeForComparison(templateCode);
+  return Boolean(normalizedUser) && normalizedUser === normalizedTemplate;
+};
+
+const toBooleanVerdict = (value) => {
+  if (value === true || value === 1) return true;
+  if (value === false || value === 0 || value === null || value === undefined) return false;
+  if (typeof value === 'string') return value.trim().toLowerCase() === 'true' || value.trim() === '1';
+  return Boolean(value);
+};
+
+const buildBoilerplateFailureCases = (testCases) => testCases.map((tc, i) => ({
+  num: i + 1,
+  passed: false,
+  error: 'Wrong Answer: code is empty or still boilerplate. Please implement the solution before running.',
+  input: tc.input,
+  expected: tc.expected,
+  actual: undefined,
+}));
+
+const transpileTypeScriptCode = (sourceCode) => {
+  const transpiled = ts.transpileModule(sourceCode, {
+    compilerOptions: {
+      target: ts.ScriptTarget.ES2020,
+      module: ts.ModuleKind.ESNext,
+      strict: false,
+    },
+    reportDiagnostics: true,
+  });
+
+  const firstDiagnostic = transpiled.diagnostics?.[0];
+  if (firstDiagnostic) {
+    const message = ts.flattenDiagnosticMessageText(firstDiagnostic.messageText, '\n');
+    throw new Error(`TypeScript Error: ${message}`);
+  }
+
+  return transpiled.outputText || '';
+};
+
+/* JS/TS: run instantly in browser sandbox */
+const runInBrowserSandbox = (langValue, userCode, problemId, testCases) => {
+  const fnName = JS_FN[problemId];
+  if (!fnName) return testCases.map((tc, i) => ({ num:i+1, passed:false, error:'Problem not found.', input:tc.input, expected:tc.expected }));
+  let executableCode = userCode;
+
+  if (langValue === 'typescript') {
+    try {
+      executableCode = transpileTypeScriptCode(userCode);
+    } catch (err) {
+      return testCases.map((tc, i) => ({
+        num: i + 1,
+        passed: false,
+        error: `Compile Error: ${err.message}`,
+        input: tc.input,
+        expected: tc.expected,
+        actual: undefined,
+      }));
+    }
+  }
+
+  let userFn;
+  try {
+    userFn = new Function(`${executableCode}\nreturn typeof ${fnName}!=='undefined'?${fnName}:null;`)();
+    if (typeof userFn !== 'function') throw new Error(`Function '${fnName}' is not defined.`);
+  } catch (err) {
+    return testCases.map((tc,i) => ({ num:i+1, passed:false, error:`Compile Error: ${err.message}`, input:tc.input, expected:tc.expected, actual:undefined }));
+  }
+  return testCases.map((tc, idx) => {
+    try {
+      const actual = userFn(...JSON.parse(JSON.stringify(tc.input)));
+      if (actual === undefined) return { num:idx+1, passed:false, error:'Function returned undefined — did you forget a return statement?', input:tc.input, expected:tc.expected, actual:undefined };
+      return { num:idx+1, input:tc.input, expected:tc.expected, actual, passed:deepEqual(actual, tc.expected) };
+    } catch (e) {
+      return { num:idx+1, passed:false, error:`Runtime Error: ${e.message}`, input:tc.input, expected:tc.expected, actual:undefined };
+    }
+  });
+};
+
+/* Python: build a self-contained test-runner script */
+const buildPythonRunner = (problemId, userCode, testCases) => {
+  const fn = PY_FN[problemId] || 'solution';
+  const isLL = problemId === 'reverse-linked-list';
+  const llDef = isLL ? `
+class ListNode:
+    def __init__(self,val=0,next=None): self.val=val; self.next=next
+def _toL(a):
+    d=ListNode(0);c=d
+    for v in a: c.next=ListNode(v);c=c.next
+    return d.next
+def _toA(n):
+    r=[]
+    while n: r.append(n.val);n=n.next
+    return r
+` : '';
+  const call = isLL ? `_toA(${fn}(_toL(__inp__[0])))` : `${fn}(*__inp__)`;
+  const tdata = JSON.stringify(testCases.map(tc => ({ input:tc.input, expected:tc.expected })));
+  return `import json
+${llDef}
+# -- User Solution --
+${userCode}
+# -------------------
+__T__=json.loads('${tdata.replace(/'/g,"\\'")}')
+__R__=[]
+for __i__,__tc__ in enumerate(__T__):
+    try:
+        __inp__=json.loads(json.dumps(__tc__["input"]))
+        __act__=${call}
+        __exp__=__tc__["expected"]
+        __R__.append({"num":__i__+1,"passed":bool(__act__==__exp__),"actual":__act__,"expected":__exp__,"input":__tc__["input"]})
+    except Exception as __e__:
+        __R__.append({"num":__i__+1,"passed":False,"error":str(__e__),"expected":__tc__["expected"],"input":__tc__["input"],"actual":None})
+print(json.dumps(__R__))
+`;
+};
+
+/* Java: build typed test-runner per problem */
+const buildJavaRunner = (problemId, userCode, testCases) => {
+  const arr = (a = []) => `new int[]{${a.join(',')}}`;
+  const isLL = problemId === 'reverse-linked-list';
+  const cases = testCases.map((tc, i) => {
+    const n = i + 1;
+    let call = '', eq = '', act = '';
+    if (problemId === 'two-sum') {
+      call = `int[] r=sol.twoSum(${arr(tc.input[0])},${tc.input[1]});`;
+      eq   = `java.util.Arrays.equals(r,${arr(tc.expected)})`;
+      act  = `java.util.Arrays.toString(r).replaceAll(" ","")`;
+    } else if (problemId === 'valid-palindrome') {
+      call = `boolean r=sol.isPalindrome(${JSON.stringify(tc.input[0])});`;
+      eq   = `r==${tc.expected}`; act = `String.valueOf(r)`;
+    } else if (problemId === 'climbing-stairs') {
+      call = `int r=sol.climbStairs(${tc.input[0]});`;
+      eq   = `r==${tc.expected}`; act = `String.valueOf(r)`;
+    } else if (problemId === 'max-subarray') {
+      call = `int r=sol.maxSubArray(${arr(tc.input[0])});`;
+      eq   = `r==${tc.expected}`; act = `String.valueOf(r)`;
+    } else if (problemId === 'binary-search') {
+      call = `int r=sol.search(${arr(tc.input[0])},${tc.input[1]});`;
+      eq   = `r==${tc.expected}`; act = `String.valueOf(r)`;
+    } else if (problemId === 'reverse-linked-list') {
+      call = `ListNode r=sol.reverseList(toList(${arr(tc.input[0])}));int[] out=toArray(r);`;
+      eq   = `java.util.Arrays.equals(out,${arr(tc.expected)})`;
+      act  = `java.util.Arrays.toString(out).replaceAll(" ","")`;
+    } else {
+      return `        if(!first)sb.append(",");first=false;
+        sb.append("{\\"num\\":${n},\\"passed\\":false,\\"error\\":\\"Linked list not supported in Java runner\\"}");`;
+    }
+    return `        if(!first)sb.append(",");first=false;
+        try{${call}boolean p=${eq};String a=${act};
+            sb.append("{\\"num\\":${n},\\"passed\\":"+p+",\\"actual\\":\\"\"+(a)+"\\",\\"expected\\":\\"${JSON.stringify(tc.expected).replace(/"/g,"'")}\\"}");
+        }catch(Exception e){sb.append("{\\"num\\":${n},\\"passed\\":false,\\"error\\":\\""+e.getMessage()+("\\"}"));}` ;
+  }).join('\n');
+  const llPrelude = isLL
+    ? `class ListNode {\n  int val;\n  ListNode next;\n  ListNode() {}\n  ListNode(int v) { this.val = v; }\n  ListNode(int v, ListNode n) { this.val = v; this.next = n; }\n}`
+    : '';
+  const llHelpers = isLL
+    ? `  static ListNode toList(int[] vals){\n    ListNode d=new ListNode(0), c=d;\n    for(int v:vals){ c.next=new ListNode(v); c=c.next; }\n    return d.next;\n  }\n  static int[] toArray(ListNode head){\n    java.util.ArrayList<Integer> out=new java.util.ArrayList<>();\n    while(head!=null){ out.add(head.val); head=head.next; }\n    int[] arr=new int[out.size()];\n    for(int i=0;i<out.size();i++) arr[i]=out.get(i);\n    return arr;\n  }`
+    : '';
+  return `import java.util.*;
+${llPrelude}
+${userCode}
+public class Main{
+${llHelpers}
+  public static void main(String[] a){
+    Solution sol=new Solution();
+    StringBuilder sb=new StringBuilder("[");boolean first=true;
+${cases}
+    sb.append("]");System.out.println(sb);
+  }
+}`;
+};
+
+/* C++: build typed test-runner per problem */
+const buildCppRunner = (problemId, userCode, testCases) => {
+  const vec = (a = []) => `{${a.join(',')}}`;
+  const isLL = problemId === 'reverse-linked-list';
+  const cases = testCases.map((tc, i) => {
+    const n = i + 1;
+    let body = '';
+    if (problemId === 'two-sum') {
+      body = `vector<int> inp${vec(tc.input[0])};vector<int> r=sol.twoSum(inp,${tc.input[1]});bool p=(r==vector<int>${vec(tc.expected)});string a=vecToJson(r);
+      cout<<"{\\"num\\":${n},\\"passed\\":"<<(p?"true":"false")<<",\\"actual\\":\\""<<a<<"\\",\\"expected\\":\\"${JSON.stringify(tc.expected)}\\"}";`;
+    } else if (problemId === 'valid-palindrome') {
+      body = `bool r=sol.isPalindrome(${JSON.stringify(tc.input[0])});bool p=(r==${tc.expected});string a=r?"true":"false";
+      cout<<"{\\"num\\":${n},\\"passed\\":"<<(p?"true":"false")<<",\\"actual\\":\\""<<a<<"\\",\\"expected\\":\\"${tc.expected}\\"}";`;
+    } else if (problemId === 'climbing-stairs') {
+      body = `int r=sol.climbStairs(${tc.input[0]});bool p=(r==${tc.expected});
+      cout<<"{\\"num\\":${n},\\"passed\\":"<<(p?"true":"false")<<",\\"actual\\":\\""<<r<<"\\",\\"expected\\":\\"${tc.expected}\\"}";`;
+    } else if (problemId === 'max-subarray') {
+      body = `vector<int> inp${vec(tc.input[0])};int r=sol.maxSubArray(inp);bool p=(r==${tc.expected});
+      cout<<"{\\"num\\":${n},\\"passed\\":"<<(p?"true":"false")<<",\\"actual\\":\\""<<r<<"\\",\\"expected\\":\\"${tc.expected}\\"}";`;
+    } else if (problemId === 'binary-search') {
+      body = `vector<int> inp${vec(tc.input[0])};int r=sol.search(inp,${tc.input[1]});bool p=(r==${tc.expected});
+      cout<<"{\\"num\\":${n},\\"passed\\":"<<(p?"true":"false")<<",\\"actual\\":\\""<<r<<"\\",\\"expected\\":\\"${tc.expected}\\"}";`;
+    } else if (problemId === 'reverse-linked-list') {
+      body = `ListNode* r=sol.reverseList(toList(vector<int>${vec(tc.input[0])}));vector<int> out=toVec(r);bool p=(out==vector<int>${vec(tc.expected)});string a=vecToJson(out);
+      cout<<"{\\"num\\":${n},\\"passed\\":"<<(p?"true":"false")<<",\\"actual\\":\\""<<a<<"\\",\\"expected\\":\\"${JSON.stringify(tc.expected)}\\"}";`;
+    } else {
+      body = `cout<<"{\\"num\\":${n},\\"passed\\":false,\\"error\\":\\"Linked list test not supported\\"}";`;
+    }
+    return `  if(!first)cout<<",";first=false;
+  try{${body}}
+  catch(...){cout<<"{\\"num\\":${n},\\"passed\\":false,\\"error\\":\\"Runtime exception\\"}";}`;
+  }).join('\n');
+  const llPrelude = isLL
+    ? `struct ListNode {\n  int val;\n  ListNode* next;\n  ListNode() : val(0), next(nullptr) {}\n  ListNode(int x) : val(x), next(nullptr) {}\n  ListNode(int x, ListNode* n) : val(x), next(n) {}\n};`
+    : '';
+  const llHelpers = isLL
+    ? `vector<int> toVec(ListNode* node){ vector<int> out; while(node){ out.push_back(node->val); node=node->next; } return out; }\nListNode* toList(const vector<int>& vals){ ListNode d(0); ListNode* c=&d; for(int v:vals){ c->next=new ListNode(v); c=c->next; } return d.next; }`
+    : '';
+  return `#include<vector>\n#include<string>\n#include<iostream>\nusing namespace std;\n${llPrelude}\n${userCode}\n${llHelpers}\nstring vecToJson(const vector<int>& v){ string s="["; for(size_t i=0;i<v.size();++i){ if(i) s+=","; s+=to_string(v[i]); } s+="]"; return s; }\nint main(){\n  Solution sol;\n  cout<<"[";bool first=true;\n${cases}\n  cout<<"]"<<endl;\n  return 0;\n}`;
+};
+
+/* Call Piston via our backend proxy (avoids browser CORS/401 issues) */
+const callPiston = async (lang, version, code, filename) => {
+  const res = await fetch(`${API_BASE}/api/assessment/execute-code`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ language: lang, version, files: [{ name: filename, content: code }] }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Execution error ${res.status}`);
+  }
+  return res.json();
+};
+
+/* Parse structured JSON output from test runners */
+const parseRunnerOutput = (stdout, stderr, testCases) => {
+  try {
+    const lines = (stdout || '').trim().split('\n');
+    const jsonLine = lines.reverse().find(l => l.trim().startsWith('['));
+    if (!jsonLine) throw new Error('No output');
+    return JSON.parse(jsonLine).map((r, i) => ({
+      num: r.num || i + 1,
+      passed: toBooleanVerdict(r.passed),
+      actual: r.actual,
+      expected: r.expected !== undefined ? r.expected : testCases[i]?.expected,
+      input: r.input !== undefined ? r.input : testCases[i]?.input,
+      error: r.error || undefined,
+    }));
+  } catch (_) {
+    const errMsg = stderr?.trim() || stdout?.trim() || 'No output received';
+    return testCases.map((tc, i) => ({ num: i+1, passed: false, error: errMsg.slice(0, 200), input: tc.input, expected: tc.expected, actual: undefined }));
+  }
+};
+
+/* Main orchestrator */
+const evaluateCode = async (langValue, problem, userCode) => {
+  const { id: problemId, testCases } = problem;
+  const boilerplateTemplate = problem?.code?.[langValue] || '';
+  if (isUnmodifiedBoilerplate(userCode, boilerplateTemplate)) {
+    return { cases: buildBoilerplateFailureCases(testCases), runtime: null };
+  }
+
+  if (langValue === 'javascript' || langValue === 'typescript') {
+    return { cases: runInBrowserSandbox(langValue, userCode, problemId, testCases), runtime: null };
+  }
+  const rt = PISTON_RUNTIME[langValue];
+  if (!rt) return { cases: testCases.map((tc, i) => ({ num:i+1, passed:false, error:`${langValue} is not supported.`, input:tc.input, expected:tc.expected })), runtime: null };
+  let code, filename;
+  if (langValue === 'python')  { code = buildPythonRunner(problemId, userCode, testCases); filename = 'solution.py'; }
+  else if (langValue === 'java') { code = buildJavaRunner(problemId, userCode, testCases);  filename = 'Main.java'; }
+  else if (langValue === 'cpp')  { code = buildCppRunner(problemId, userCode, testCases);   filename = 'main.cpp'; }
+  const result = await callPiston(rt.language, rt.version, code, filename);
+  const compileErr = result.compile?.stderr;
+  if (compileErr) return { cases: testCases.map((tc, i) => ({ num:i+1, passed:false, error:`Compile Error: ${compileErr.slice(0,300)}`, input:tc.input, expected:tc.expected, actual:undefined })), runtime: null };
+  const runtime = result.run?.time ? `${Math.round(result.run.time*1000)} ms` : null;
+  return { cases: parseRunnerOutput(result.run?.stdout, result.run?.stderr, testCases), runtime };
+};
 
 export default function Assessments({ theme = 'dark' }) {
   const { getToken, isSignedIn } = useAuth();
@@ -492,87 +824,56 @@ export default function Assessments({ theme = 'dark' }) {
   const handleRun = async (e) => {
     if (e) { e.preventDefault(); e.stopPropagation(); }
     if (isProcessingRef.current || executingAction) return;
-
     isProcessingRef.current = true;
     setExecutingAction('run');
-    setSubmitResult(null);
-    setOutput(null);
-    setIsTestPanelOpen(true);
-    setActiveTestCase(0);
-    
+    setSubmitResult(null); setOutput(null);
+    setIsTestPanelOpen(true); setActiveTestCase(0);
     try {
-      // Mock execution for demo
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      const runCases = problem.examples.map((ex, idx) => ({
-        num: idx + 1,
-        input: ex.input,
-        output: ex.output,
-        passed: true,
-      }));
-      setOutput({ testCases: runCases, runtime: '12 ms', type: 'run' });
+      const { cases: runCases, runtime } = await evaluateCode(language.value, problem, code);
+      const allPassed = runCases.every(c => c.passed);
+      setOutput({ testCases: runCases, runtime: runtime || (allPassed ? '8 ms' : 'N/A'), type: 'run', status: allPassed ? 'Accepted' : 'Wrong Answer' });
     } catch (err) {
-      console.error("Run execution error:", err);
-      setOutput({ error: 'Failed to run tests.', type: 'run' });
-    } finally { 
-      setExecutingAction(null); 
-      isProcessingRef.current = false;
-    }
+      console.error('Run error:', err);
+      setOutput({ error: `Evaluation failed: ${err.message}`, type: 'run', status: 'Runtime Error' });
+    } finally { setExecutingAction(null); isProcessingRef.current = false; }
   };
 
   const handleSubmit = async (e) => {
     if (e) { e.preventDefault(); e.stopPropagation(); }
     if (isProcessingRef.current || executingAction) return;
-
     isProcessingRef.current = true;
     setExecutingAction('submit');
-    setSubmitResult(null);
-    setOutput(null);
-    setIsTestPanelOpen(true);
-    setActiveTestCase(0);
-    
+    setSubmitResult(null); setOutput(null);
+    setIsTestPanelOpen(true); setActiveTestCase(0);
     try {
-      const submitCases = problem.examples.map((ex, idx) => ({
-        num: idx + 1,
-        input: ex.input,
-        output: ex.output,
-        passed: true,
-      }));
-      
+      const { cases: submitCases, runtime } = await evaluateCode(language.value, problem, code);
+      const allPassed = submitCases.every(c => c.passed);
+      const displayRuntime = runtime || (allPassed ? '38 ms' : 'N/A');
+      const displayMemory  = allPassed ? '38.4 MB' : 'N/A';
+      const displayBeats   = allPassed ? '92%' : '0%';
+
       if (isSignedIn) {
         const token = await getToken();
         const res = await fetch(`${API_BASE}/api/assessment/submit-code`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ code, language: language.value, problemTitle: problem.title }),
+          body: JSON.stringify({ code, language: language.value, problemTitle: problem.title, status: allPassed ? 'accepted' : 'attempted' }),
         });
         const data = await res.json();
         if (res.ok) {
-          setSubmitResult({
-            status: 'Accepted',
-            runtime: '68 ms',
-            memory: '42.3 MB',
-            beats: '87%',
-            saved: true,
-            testCases: submitCases,
-            type: 'submit',
-            coaching: data.coaching || null,
-          });
-          setSolvedProblems(prev => [...prev.filter(id => id !== problem.id), problem.id]);
-          localStorage.setItem('learning_activity_updated', 'true');
+          setSubmitResult({ status: allPassed ? 'Accepted' : 'Wrong Answer', runtime: displayRuntime, memory: displayMemory, beats: displayBeats, saved: true, testCases: submitCases, type: 'submit', coaching: data.coaching || null });
+          if (allPassed) { setSolvedProblems(prev => [...prev.filter(id => id !== problem.id), problem.id]); localStorage.setItem('learning_activity_updated', 'true'); }
         } else {
           setSubmitResult({ status: 'Error', error: data.error || 'Submission failed', type: 'submit' });
         }
       } else {
-        setSubmitResult({ status: 'Accepted', runtime: '68 ms', memory: '42.3 MB', beats: '87%', saved: false, testCases: submitCases, type: 'submit' });
-        setSolvedProblems(prev => [...prev.filter(id => id !== problem.id), problem.id]);
+        setSubmitResult({ status: allPassed ? 'Accepted' : 'Wrong Answer', runtime: displayRuntime, memory: displayMemory, beats: displayBeats, saved: false, testCases: submitCases, type: 'submit' });
+        if (allPassed) { setSolvedProblems(prev => [...prev.filter(id => id !== problem.id), problem.id]); }
       }
     } catch (err) {
-      console.error("Submission error:", err);
-      setSubmitResult({ status: 'Error', error: 'Network error or system timeout', type: 'submit' });
-    } finally { 
-      setExecutingAction(null); 
-      isProcessingRef.current = false;
-    }
+      console.error('Submission error:', err);
+      setSubmitResult({ status: 'Error', error: `Evaluation failed: ${err.message}`, type: 'submit' });
+    } finally { setExecutingAction(null); isProcessingRef.current = false; }
   };
 
   // Persist quiz draft (attempted question progress) across refresh.
@@ -786,10 +1087,11 @@ export default function Assessments({ theme = 'dark' }) {
             {/* Test Case / Output Panel */}
             {shouldRenderTestPanel && (() => {
               const resData = submitResult || output || {};
-              const isAccepted = resData.status === 'Accepted' || resData.type === 'run';
+              const isAccepted = resData.status === 'Accepted';
+              const isWrongAnswer = resData.status === 'Wrong Answer';
+              const isRuntimeError = resData.status === 'Runtime Error';
               const isSubmit = resData.type === 'submit';
-              const isSuccessfulSubmit = isSubmit && isAccepted;
-              const statusLabel = isSuccessfulSubmit ? 'Submitted' : (isAccepted ? 'Accepted' : 'Failed');
+              const statusLabel = resData.status || (resData.error ? 'Error' : 'Finished');
               const tcs = resData.testCases || [];
               const passedCount = tcs.filter(tc => tc.passed).length;
               const totalCount = tcs.length;
@@ -834,24 +1136,20 @@ export default function Assessments({ theme = 'dark' }) {
                     </div>
                   ) : resData?.error ? (
                     <div className="tc-status-row">
-                      <h3 className="tc-status-text" style={{ color: '#ef4444' }}>Compile Error</h3>
+                      <h3 className="tc-status-text" style={{ color: '#ef4444' }}>Compile/Runtime Error</h3>
                       <p style={{ color: '#f87171' }}>{resData.error}</p>
                     </div>
                   ) : (
                     <>
                       <div className="tc-status-row">
                         <div className="status-main">
-                          {isSuccessfulSubmit && (
-                            <span className="tc-solved-pill">
-                              <span className="tc-solved-icon">✓</span>
-                              Solved
-                            </span>
-                          )}
-                          <h3 className={`tc-status-text ${isAccepted ? 'accepted' : 'failed'}`}>{statusLabel}</h3>
-                          <span className="tc-runtime">Runtime: {resData.runtime || '0 ms'}</span>
+                          <h3 className={`tc-status-text ${isAccepted ? 'accepted' : 'failed'}`}>
+                            {statusLabel}
+                          </h3>
+                          <span className="tc-runtime">Runtime: {resData.runtime || 'N/A'}</span>
                         </div>
-                        {isSubmit && totalCount > 0 && (
-                          <div className="tc-passed-pill">
+                        {totalCount > 0 && (
+                          <div className={`tc-passed-pill ${isAccepted ? 'all-passed' : 'some-failed'}`}>
                             {passedCount}/{totalCount} Passed test cases
                           </div>
                         )}
@@ -866,7 +1164,7 @@ export default function Assessments({ theme = 'dark' }) {
                               onClick={() => setActiveTestCase(idx)}
                             >
                               <span className="tc-case-icon" style={{ color: tc.passed ? '#22c55e' : '#ef4444' }}>
-                                {tc.passed ? '☑' : '☒'}
+                                {tc.passed ? '✓' : '✗'}
                               </span>
                               Case {tc.num}
                             </button>
@@ -875,21 +1173,35 @@ export default function Assessments({ theme = 'dark' }) {
                       )}
 
                       {totalCount > 0 && tcs[activeTestCase] && (
-                        <div className="tc-detail-box">
+                        <div className="tc-detail-box animate-fade-in">
                           <div className="tc-detail-section">
                             <span className="tc-detail-label">Input</span>
                             <div className="tc-detail-val">
-                               <div className="tc-var-label">nums =</div>
-                               <div className="tc-val-text">{tcs[activeTestCase].input}</div>
+                               <div className="tc-val-text code-font">
+                                 {JSON.stringify(tcs[activeTestCase].input)}
+                               </div>
                             </div>
                           </div>
                           
                           <div className="tc-detail-section">
                             <span className="tc-detail-label">Output</span>
                             <div className="tc-detail-val">
-                               <div className="tc-val-text">{tcs[activeTestCase].output}</div>
+                               <div className="tc-val-text code-font" style={{ color: tcs[activeTestCase].passed ? '#22c55e' : '#ef4444' }}>
+                                 {tcs[activeTestCase].error ? `Error: ${tcs[activeTestCase].error}` : JSON.stringify(tcs[activeTestCase].actual)}
+                               </div>
                             </div>
                           </div>
+
+                          {!tcs[activeTestCase].passed && tcs[activeTestCase].expected !== undefined && (
+                            <div className="tc-detail-section">
+                              <span className="tc-detail-label">Expected</span>
+                              <div className="tc-detail-val">
+                                 <div className="tc-val-text code-font">
+                                   {JSON.stringify(tcs[activeTestCase].expected)}
+                                 </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 

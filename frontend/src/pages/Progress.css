@@ -180,7 +180,7 @@
 .val-row .current {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #00E676;
+  color: #7c3aed;
 }
 
 .val-row .total {
@@ -245,7 +245,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #FF1744;
+  border-top-color: #7c3aed;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto;

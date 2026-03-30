@@ -8,9 +8,9 @@ import './Progress.css';
 
 /* ── Palette ── */
 const COLORS = {
-  primary: '#FF1744', // Pink/Red highlight
-  progress: '#00E676', // Neon Green
-  secondary: '#E91E63',
+  primary: '#7c3aed', // Purple/Violet highlight
+  progress: '#a78bfa', // Lighter Violet
+  secondary: '#8b5cf6',
   text: '#E6EDF3',
   muted: '#9CA3AF',
   card: '#0a0a0c',

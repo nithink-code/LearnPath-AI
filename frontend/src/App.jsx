@@ -11,6 +11,8 @@ import Assessments from './pages/Assessments'
 import LearningPlans from './pages/LearningPlans'
 import Progress from './pages/Progress'
 import AiAssistant from './pages/AiAssistant'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 import StrokeLogoLoader from './components/StrokeLogoLoader'
 import StarBackground from './components/StarBackground'
 import Footer from './components/Footer'
@@ -33,7 +35,9 @@ function AppContent({ theme, onToggleTheme }) {
     '/learning-plans': 'OPTIMIZING CURRICULUM...',
     '/progress': 'CALIBRATING PERFORMANCE...',
     '/ai-assistant': 'SYNCHRONIZING NEURAL AI...',
-    '/about': 'RETRIEVING INTEL...'
+    '/about': 'RETRIEVING INTEL...',
+    '/privacy-policy': 'VERIFYING POLICY NODE...',
+    '/terms-of-service': 'LOADING LEGAL PROTOCOLS...'
   }), []);
 
   useEffect(() => {
@@ -88,7 +92,7 @@ function AppContent({ theme, onToggleTheme }) {
       );
 
       authToastTimerRef.current = null;
-    }, 420);
+    }, 280);
 
     return () => {
       if (authToastTimerRef.current) {
@@ -106,20 +110,21 @@ function AppContent({ theme, onToggleTheme }) {
           zIndex: 99999,
         }}
         toastOptions={{
-          duration: 3800,
+          duration: 3400,
           style: {
             background: '#0a0a0c',
             color: '#f8fafc',
             border: '2px solid rgba(0, 230, 118, 0.4)',
-            borderRadius: '12px',
+            borderRadius: '999px',
             fontSize: '0.86rem',
-            padding: '10px 14px',
+            padding: '10px 20px',
             boxShadow: '0 0 25px rgba(0, 230, 118, 0.25), 0 14px 32px rgba(0, 0, 0, 0.6)',
             fontWeight: 700,
             letterSpacing: '0.02em',
             textAlign: 'center',
             minWidth: 0,
-            width: 'min(90vw, 340px)',
+            width: 'fit-content',
+            maxWidth: 'min(92vw, 420px)',
             margin: '0 auto'
           },
           success: {
@@ -187,9 +192,11 @@ function AppContent({ theme, onToggleTheme }) {
               <Route path="/learning-plans" element={<ProtectedRoute><LearningPlans /></ProtectedRoute>} />
               <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
               <Route path="/ai-assistant" element={<ProtectedRoute><AiAssistant /></ProtectedRoute>} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
             </Routes>
 
-            <Footer />
+            {location.pathname !== '/ai-assistant' && <Footer />}
           </motion.div>
         )}
       </AnimatePresence>
