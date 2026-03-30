@@ -7,6 +7,10 @@ import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+import 'monaco-editor/esm/vs/language/typescript/monaco.contribution';
+import 'monaco-editor/esm/vs/basic-languages/python/python.contribution';
+import 'monaco-editor/esm/vs/basic-languages/java/java.contribution';
+import 'monaco-editor/esm/vs/basic-languages/cpp/cpp.contribution';
 import { useAuth } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE } from '../config';
@@ -26,17 +30,41 @@ globalThis.MonacoEnvironment = {
 
 loader.config({ monaco });
 
-monaco.editor.defineTheme('learnpath-dark', {
+const LEARNPATH_DARK_THEME = {
   base: 'vs-dark',
   inherit: true,
-  rules: [],
+  semanticHighlighting: false,
+  rules: [
+    { token: 'keyword', foreground: '61AFEF' },
+    { token: 'keyword.js', foreground: '61AFEF' },
+    { token: 'keyword.ts', foreground: '61AFEF' },
+    { token: 'keyword.flow.js', foreground: '61AFEF' },
+    { token: 'keyword.flow.ts', foreground: '61AFEF' },
+    { token: 'keyword.control', foreground: '61AFEF' },
+    { token: 'keyword.type', foreground: '61AFEF' },
+    { token: 'type', foreground: '4EC9B0' },
+    { token: 'type.identifier', foreground: '4EC9B0' },
+    { token: 'identifier.type', foreground: '4EC9B0' },
+    { token: 'class', foreground: '4EC9B0' },
+    { token: 'class.identifier', foreground: '4EC9B0' },
+    { token: 'function', foreground: 'DCDCAA' },
+    { token: 'function.identifier', foreground: 'DCDCAA' },
+    { token: 'parameter', foreground: '9CDCFE' },
+  ],
   colors: {
     'editor.background': '#06070b',
     'editorGutter.background': '#06070b',
     'minimap.background': '#06070b',
     'editor.lineHighlightBackground': '#0b0d12',
   },
-});
+};
+
+const applyLearnpathTheme = (monacoInstance) => {
+  monacoInstance.editor.defineTheme('learnpath-dark', LEARNPATH_DARK_THEME);
+  monacoInstance.editor.setTheme('learnpath-dark');
+};
+
+applyLearnpathTheme(monaco);
 
 const QUIZ_DRAFT_KEY = 'assessments_quiz_draft_v1';
 const CODE_DRAFT_KEY = 'assessments_code_draft_v1';
@@ -44,93 +72,133 @@ const CODE_DRAFT_KEY = 'assessments_code_draft_v1';
 
 const quizQuestionsBank = [
   // JavaScript
-  { id:1, category:'JavaScript', difficulty:'Medium',
-    question:'What is the output of `typeof null` in JavaScript?',
-    options:['null','undefined','object','string'], correct:2,
-    explanation:'`typeof null` returns "object" â€” a historic JS bug kept for backward compatibility.' },
-  { id:2, category:'JavaScript', difficulty:'Easy',
-    question:'Which method removes the last element from an array and returns it?',
-    options:['shift()','pop()','splice()','slice()'], correct:1,
-    explanation:'`pop()` removes and returns the last element. `shift()` does the same for the first.' },
-  { id:3, category:'JavaScript', difficulty:'Hard',
-    question:'What will `console.log(0.1 + 0.2 === 0.3)` print?',
-    options:['true','false','NaN','undefined'], correct:1,
-    explanation:'Floating-point precision: `0.1 + 0.2` equals `0.30000000000000004`, not `0.3`.' },
-  { id:4, category:'JavaScript', difficulty:'Medium',
-    question:'What is a closure in JavaScript?',
-    options:['A function with no return value','A function bundled with its lexical environment','A way to close the browser tab','An error-handling mechanism'],
-    correct:1, explanation:'A closure retains access to its outer scope even after the outer function has returned.' },
+  {
+    id: 1, category: 'JavaScript', difficulty: 'Medium',
+    question: 'What is the output of `typeof null` in JavaScript?',
+    options: ['null', 'undefined', 'object', 'string'], correct: 2,
+    explanation: '`typeof null` returns "object" â€” a historic JS bug kept for backward compatibility.'
+  },
+  {
+    id: 2, category: 'JavaScript', difficulty: 'Easy',
+    question: 'Which method removes the last element from an array and returns it?',
+    options: ['shift()', 'pop()', 'splice()', 'slice()'], correct: 1,
+    explanation: '`pop()` removes and returns the last element. `shift()` does the same for the first.'
+  },
+  {
+    id: 3, category: 'JavaScript', difficulty: 'Hard',
+    question: 'What will `console.log(0.1 + 0.2 === 0.3)` print?',
+    options: ['true', 'false', 'NaN', 'undefined'], correct: 1,
+    explanation: 'Floating-point precision: `0.1 + 0.2` equals `0.30000000000000004`, not `0.3`.'
+  },
+  {
+    id: 4, category: 'JavaScript', difficulty: 'Medium',
+    question: 'What is a closure in JavaScript?',
+    options: ['A function with no return value', 'A function bundled with its lexical environment', 'A way to close the browser tab', 'An error-handling mechanism'],
+    correct: 1, explanation: 'A closure retains access to its outer scope even after the outer function has returned.'
+  },
   // Python
-  { id:5, category:'Python', difficulty:'Easy',
-    question:'Which keyword is used to define a function in Python?',
-    options:['func','function','def','define'], correct:2,
-    explanation:'Python uses `def` to declare functions.' },
-  { id:6, category:'Python', difficulty:'Medium',
-    question:'What does `*args` mean in a Python function definition?',
-    options:['Unpacks a dictionary','Accepts any number of keyword args','Accepts any number of positional args','Creates a pointer'],
-    correct:2, explanation:'`*args` collects extra positional arguments into a tuple.' },
-  { id:7, category:'Python', difficulty:'Hard',
-    question:'What is the output of `[x**2 for x in range(4) if x % 2 == 0]`?',
-    options:['[1, 9]','[0, 4]','[0, 1, 4, 9]','[4, 16]'], correct:1,
-    explanation:'Even numbers in range(4) are 0 and 2. 0Â²=0, 2Â²=4 â†’ [0, 4].' },
+  {
+    id: 5, category: 'Python', difficulty: 'Easy',
+    question: 'Which keyword is used to define a function in Python?',
+    options: ['func', 'function', 'def', 'define'], correct: 2,
+    explanation: 'Python uses `def` to declare functions.'
+  },
+  {
+    id: 6, category: 'Python', difficulty: 'Medium',
+    question: 'What does `*args` mean in a Python function definition?',
+    options: ['Unpacks a dictionary', 'Accepts any number of keyword args', 'Accepts any number of positional args', 'Creates a pointer'],
+    correct: 2, explanation: '`*args` collects extra positional arguments into a tuple.'
+  },
+  {
+    id: 7, category: 'Python', difficulty: 'Hard',
+    question: 'What is the output of `[x**2 for x in range(4) if x % 2 == 0]`?',
+    options: ['[1, 9]', '[0, 4]', '[0, 1, 4, 9]', '[4, 16]'], correct: 1,
+    explanation: 'Even numbers in range(4) are 0 and 2. 0Â²=0, 2Â²=4 â†’ [0, 4].'
+  },
   // React
-  { id:8, category:'React', difficulty:'Easy',
-    question:'Which hook performs side effects in a functional component?',
-    options:['useState','useEffect','useContext','useReducer'], correct:1,
-    explanation:'`useEffect` handles side effects like data fetching and DOM mutations.' },
-  { id:9, category:'React', difficulty:'Medium',
-    question:'What does the second value of `useState` return?',
-    options:['The initial state','A setter function that triggers re-render','A ref object','The previous state'],
-    correct:1, explanation:'`useState` returns `[currentValue, setter]`. Calling the setter triggers a re-render.' },
-  { id:10, category:'React', difficulty:'Hard',
-    question:'When does React re-render a component?',
-    options:['Only when props change','Only when state changes','When state, props, or consumed context changes','Every second automatically'],
-    correct:2, explanation:'React re-renders on state change, props change, or context value update.' },
+  {
+    id: 8, category: 'React', difficulty: 'Easy',
+    question: 'Which hook performs side effects in a functional component?',
+    options: ['useState', 'useEffect', 'useContext', 'useReducer'], correct: 1,
+    explanation: '`useEffect` handles side effects like data fetching and DOM mutations.'
+  },
+  {
+    id: 9, category: 'React', difficulty: 'Medium',
+    question: 'What does the second value of `useState` return?',
+    options: ['The initial state', 'A setter function that triggers re-render', 'A ref object', 'The previous state'],
+    correct: 1, explanation: '`useState` returns `[currentValue, setter]`. Calling the setter triggers a re-render.'
+  },
+  {
+    id: 10, category: 'React', difficulty: 'Hard',
+    question: 'When does React re-render a component?',
+    options: ['Only when props change', 'Only when state changes', 'When state, props, or consumed context changes', 'Every second automatically'],
+    correct: 2, explanation: 'React re-renders on state change, props change, or context value update.'
+  },
   // DSA
-  { id:11, category:'DSA', difficulty:'Hard',
-    question:'Time complexity of searching in a balanced BST?',
-    options:['O(n)','O(log n)','O(n log n)','O(1)'], correct:1,
-    explanation:'Each comparison halves the search space â†’ O(log n).' },
-  { id:12, category:'DSA', difficulty:'Medium',
-    question:'Which data structure uses LIFO order?',
-    options:['Queue','Stack','Heap','Graph'], correct:1,
-    explanation:'Stack follows Last-In-First-Out.' },
-  { id:13, category:'DSA', difficulty:'Medium',
-    question:'Worst-case time complexity of QuickSort?',
-    options:['O(n log n)','O(n)','O(nÂ²)','O(log n)'], correct:2,
-    explanation:'QuickSort degrades to O(nÂ²) when the pivot is always the smallest/largest element.' },
+  {
+    id: 11, category: 'DSA', difficulty: 'Hard',
+    question: 'Time complexity of searching in a balanced BST?',
+    options: ['O(n)', 'O(log n)', 'O(n log n)', 'O(1)'], correct: 1,
+    explanation: 'Each comparison halves the search space â†’ O(log n).'
+  },
+  {
+    id: 12, category: 'DSA', difficulty: 'Medium',
+    question: 'Which data structure uses LIFO order?',
+    options: ['Queue', 'Stack', 'Heap', 'Graph'], correct: 1,
+    explanation: 'Stack follows Last-In-First-Out.'
+  },
+  {
+    id: 13, category: 'DSA', difficulty: 'Medium',
+    question: 'Worst-case time complexity of QuickSort?',
+    options: ['O(n log n)', 'O(n)', 'O(nÂ²)', 'O(log n)'], correct: 2,
+    explanation: 'QuickSort degrades to O(nÂ²) when the pivot is always the smallest/largest element.'
+  },
   // SQL
-  { id:14, category:'SQL', difficulty:'Easy',
-    question:'Which clause filters rows returned by a query?',
-    options:['ORDER BY','GROUP BY','WHERE','HAVING'], correct:2,
-    explanation:'`WHERE` filters rows before aggregation. `HAVING` filters after GROUP BY.' },
-  { id:15, category:'SQL', difficulty:'Medium',
-    question:'Difference between INNER JOIN and LEFT JOIN?',
-    options:['No difference','INNER returns only matches; LEFT also returns unmatched left rows','LEFT JOIN is always faster','INNER JOIN only works on primary keys'],
-    correct:1, explanation:'LEFT JOIN returns all left rows with NULLs for missing matches.' },
+  {
+    id: 14, category: 'SQL', difficulty: 'Easy',
+    question: 'Which clause filters rows returned by a query?',
+    options: ['ORDER BY', 'GROUP BY', 'WHERE', 'HAVING'], correct: 2,
+    explanation: '`WHERE` filters rows before aggregation. `HAVING` filters after GROUP BY.'
+  },
+  {
+    id: 15, category: 'SQL', difficulty: 'Medium',
+    question: 'Difference between INNER JOIN and LEFT JOIN?',
+    options: ['No difference', 'INNER returns only matches; LEFT also returns unmatched left rows', 'LEFT JOIN is always faster', 'INNER JOIN only works on primary keys'],
+    correct: 1, explanation: 'LEFT JOIN returns all left rows with NULLs for missing matches.'
+  },
   // CSS
-  { id:16, category:'CSS', difficulty:'Easy',
-    question:'Which property controls space between the border and content?',
-    options:['margin','padding','border-spacing','gap'], correct:1,
-    explanation:'`padding` is inside the border; `margin` is outside.' },
-  { id:17, category:'CSS', difficulty:'Medium',
-    question:'What does `display: flex` do?',
-    options:['Makes element invisible','Creates a flex container for children','Floats the element left','Fixes element to viewport'],
-    correct:1, explanation:'`display: flex` enables flexbox layout on all direct children.' },
+  {
+    id: 16, category: 'CSS', difficulty: 'Easy',
+    question: 'Which property controls space between the border and content?',
+    options: ['margin', 'padding', 'border-spacing', 'gap'], correct: 1,
+    explanation: '`padding` is inside the border; `margin` is outside.'
+  },
+  {
+    id: 17, category: 'CSS', difficulty: 'Medium',
+    question: 'What does `display: flex` do?',
+    options: ['Makes element invisible', 'Creates a flex container for children', 'Floats the element left', 'Fixes element to viewport'],
+    correct: 1, explanation: '`display: flex` enables flexbox layout on all direct children.'
+  },
   // TypeScript
-  { id:18, category:'TypeScript', difficulty:'Medium',
-    question:'What is the `any` type in TypeScript?',
-    options:['Accepts only numbers','Opts out of type checking','Union of all primitives','Type for arrays'],
-    correct:1, explanation:'`any` disables TypeScript type checking â€” use sparingly.' },
+  {
+    id: 18, category: 'TypeScript', difficulty: 'Medium',
+    question: 'What is the `any` type in TypeScript?',
+    options: ['Accepts only numbers', 'Opts out of type checking', 'Union of all primitives', 'Type for arrays'],
+    correct: 1, explanation: '`any` disables TypeScript type checking â€” use sparingly.'
+  },
   // System Design
-  { id:19, category:'System Design', difficulty:'Medium',
-    question:'Best database for unstructured data at scale?',
-    options:['MySQL','PostgreSQL','MongoDB','SQLite'], correct:2,
-    explanation:'MongoDB is document-oriented NoSQL, ideal for unstructured data at scale.' },
-  { id:20, category:'System Design', difficulty:'Hard',
-    question:'What is the purpose of a CDN?',
-    options:['Store databases near the server','Serve static assets from edge servers near users','Encrypt API traffic','Manage DNS records'],
-    correct:1, explanation:'CDNs cache and deliver static content from edge nodes close to users, reducing latency.' },
+  {
+    id: 19, category: 'System Design', difficulty: 'Medium',
+    question: 'Best database for unstructured data at scale?',
+    options: ['MySQL', 'PostgreSQL', 'MongoDB', 'SQLite'], correct: 2,
+    explanation: 'MongoDB is document-oriented NoSQL, ideal for unstructured data at scale.'
+  },
+  {
+    id: 20, category: 'System Design', difficulty: 'Hard',
+    question: 'What is the purpose of a CDN?',
+    options: ['Store databases near the server', 'Serve static assets from edge servers near users', 'Encrypt API traffic', 'Manage DNS records'],
+    correct: 1, explanation: 'CDNs cache and deliver static content from edge nodes close to users, reducing latency.'
+  },
 ];
 
 const STACK_TO_QUIZ_CATEGORIES = {
@@ -191,11 +259,9 @@ function generateQuizFromStack(stack, bank, targetCount = 10) {
 
 
 const LANGUAGES = [
-  { label: 'JavaScript', value: 'javascript', monaco: 'javascript' },
-  { label: 'TypeScript', value: 'typescript', monaco: 'typescript' },
-  { label: 'Python',     value: 'python',     monaco: 'python'     },
-  { label: 'Java',       value: 'java',        monaco: 'java'       },
-  { label: 'C++',        value: 'cpp',         monaco: 'cpp'        },
+  { label: 'Python', value: 'python', monaco: 'python' },
+  { label: 'Java', value: 'java', monaco: 'java' },
+  { label: 'C++', value: 'cpp', monaco: 'cpp' },
 ];
 
 
@@ -205,7 +271,7 @@ const PROBLEMS = [
     description: 'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nEach input has exactly one solution. You may not use the same element twice.',
     examples: [
       { input: 'nums = [2,7,11,15], target = 9', output: '[0,1]', explanation: 'nums[0] + nums[1] == 9.' },
-      { input: 'nums = [3,2,4], target = 6',     output: '[1,2]', explanation: 'nums[1] + nums[2] == 6.' },
+      { input: 'nums = [3,2,4], target = 6', output: '[1,2]', explanation: 'nums[1] + nums[2] == 6.' },
     ],
     testCases: [
       { input: [[2, 7, 11, 15], 9], expected: [0, 1] },
@@ -216,17 +282,17 @@ const PROBLEMS = [
     code: {
       javascript: `function twoSum(nums, target) {\n  // Write your solution here\n}`,
       typescript: `function twoSum(nums: number[], target: number): number[] {\n  // Write your solution here\n  return [];\n}`,
-      python:     `from typing import List\n\ndef two_sum(nums: List[int], target: int) -> List[int]:\n    # Write your solution here\n    pass`,
-      java:       `import java.util.*;\n\nclass Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Write your solution here\n        return new int[]{};\n    }\n}`,
-      cpp:        `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        // Write your solution here\n        return {};\n    }\n};`,
+      python: `from typing import List\n\ndef two_sum(nums: List[int], target: int) -> List[int]:\n    # Write your solution here\n    pass`,
+      java: `import java.util.*;\n\nclass Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Write your solution here\n        return new int[]{};\n    }\n}`,
+      cpp: `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        // Write your solution here\n        return {};\n    }\n};`,
     },
   },
   {
     id: 'valid-palindrome', title: 'Valid Palindrome', difficulty: 'Easy', category: 'Two Pointers',
     description: 'A phrase is a palindrome if, after converting all uppercase to lowercase and removing non-alphanumeric characters, it reads the same forward and backward.\n\nGiven a string s, return true if it is a palindrome, false otherwise.',
     examples: [
-      { input: 's = "A man, a plan, a canal: Panama"', output: 'true',  explanation: '"amanaplanacanalpanama" is a palindrome.' },
-      { input: 's = "race a car"',                    output: 'false', explanation: '"raceacar" is not a palindrome.' },
+      { input: 's = "A man, a plan, a canal: Panama"', output: 'true', explanation: '"amanaplanacanalpanama" is a palindrome.' },
+      { input: 's = "race a car"', output: 'false', explanation: '"raceacar" is not a palindrome.' },
     ],
     testCases: [
       { input: ["A man, a plan, a canal: Panama"], expected: true },
@@ -237,9 +303,9 @@ const PROBLEMS = [
     code: {
       javascript: `function isPalindrome(s) {\n  // Write your solution here\n}`,
       typescript: `function isPalindrome(s: string): boolean {\n  // Write your solution here\n  return false;\n}`,
-      python:     `def is_palindrome(s: str) -> bool:\n    # Write your solution here\n    pass`,
-      java:       `class Solution {\n    public boolean isPalindrome(String s) {\n        // Write your solution here\n        return false;\n    }\n}`,
-      cpp:        `#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isPalindrome(string s) {\n        // Write your solution here\n        return false;\n    }\n};`,
+      python: `def is_palindrome(s: str) -> bool:\n    # Write your solution here\n    pass`,
+      java: `class Solution {\n    public boolean isPalindrome(String s) {\n        // Write your solution here\n        return false;\n    }\n}`,
+      cpp: `#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isPalindrome(string s) {\n        // Write your solution here\n        return false;\n    }\n};`,
     },
   },
   {
@@ -247,7 +313,7 @@ const PROBLEMS = [
     description: 'Given the head of a singly linked list, reverse the list, and return the reversed list.',
     examples: [
       { input: 'head = [1,2,3,4,5]', output: '[5,4,3,2,1]', explanation: 'List is reversed.' },
-      { input: 'head = [1,2]',       output: '[2,1]',       explanation: 'List is reversed.' },
+      { input: 'head = [1,2]', output: '[2,1]', explanation: 'List is reversed.' },
     ],
     testCases: [
       { input: [[1, 2, 3, 4, 5]], expected: [5, 4, 3, 2, 1] },
@@ -258,9 +324,9 @@ const PROBLEMS = [
     code: {
       javascript: `// ListNode: function ListNode(val, next) { this.val = val; this.next = next ?? null; }\n\nfunction reverseList(head) {\n  // Write your solution here\n}`,
       typescript: `// class ListNode { val: number; next: ListNode | null = null; }\n\nfunction reverseList(head: ListNode | null): ListNode | null {\n  // Write your solution here\n  return null;\n}`,
-      python:     `# class ListNode:\n#     def __init__(self, val=0, next=None): ...\n\ndef reverse_list(head):\n    # Write your solution here\n    pass`,
-      java:       `// public class ListNode { int val; ListNode next; }\n\nclass Solution {\n    public ListNode reverseList(ListNode head) {\n        // Write your solution here\n        return null;\n    }\n}`,
-      cpp:        `// struct ListNode { int val; ListNode *next; };\n\nclass Solution {\npublic:\n    ListNode* reverseList(ListNode* head) {\n        // Write your solution here\n        return nullptr;\n    }\n};`,
+      python: `# class ListNode:\n#     def __init__(self, val=0, next=None): ...\n\ndef reverse_list(head):\n    # Write your solution here\n    pass`,
+      java: `// public class ListNode { int val; ListNode next; }\n\nclass Solution {\n    public ListNode reverseList(ListNode head) {\n        // Write your solution here\n        return null;\n    }\n}`,
+      cpp: `// struct ListNode { int val; ListNode *next; };\n\nclass Solution {\npublic:\n    ListNode* reverseList(ListNode* head) {\n        // Write your solution here\n        return nullptr;\n    }\n};`,
     },
   },
   {
@@ -279,9 +345,9 @@ const PROBLEMS = [
     code: {
       javascript: `function climbStairs(n) {\n  // Write your solution here\n}`,
       typescript: `function climbStairs(n: number): number {\n  // Write your solution here\n  return 0;\n}`,
-      python:     `def climb_stairs(n: int) -> int:\n    # Write your solution here\n    pass`,
-      java:       `class Solution {\n    public int climbStairs(int n) {\n        // Write your solution here\n        return 0;\n    }\n}`,
-      cpp:        `class Solution {\npublic:\n    int climbStairs(int n) {\n        // Write your solution here\n        return 0;\n    }\n};`,
+      python: `def climb_stairs(n: int) -> int:\n    # Write your solution here\n    pass`,
+      java: `class Solution {\n    public int climbStairs(int n) {\n        // Write your solution here\n        return 0;\n    }\n}`,
+      cpp: `class Solution {\npublic:\n    int climbStairs(int n) {\n        // Write your solution here\n        return 0;\n    }\n};`,
     },
   },
   {
@@ -289,7 +355,7 @@ const PROBLEMS = [
     description: 'Given an integer array nums, find the subarray with the largest sum, and return its sum.',
     examples: [
       { input: 'nums = [-2,1,-3,4,-1,2,1,-5,4]', output: '6', explanation: 'Subarray [4,-1,2,1] has sum = 6.' },
-      { input: 'nums = [1]',                      output: '1', explanation: 'Single element.' },
+      { input: 'nums = [1]', output: '1', explanation: 'Single element.' },
     ],
     testCases: [
       { input: [[-2, 1, -3, 4, -1, 2, 1, -5, 4]], expected: 6 },
@@ -300,16 +366,16 @@ const PROBLEMS = [
     code: {
       javascript: `function maxSubArray(nums) {\n  // Kadane's Algorithm\n}`,
       typescript: `function maxSubArray(nums: number[]): number {\n  // Kadane's Algorithm\n  return 0;\n}`,
-      python:     `from typing import List\n\ndef max_sub_array(nums: List[int]) -> int:\n    # Kadane's Algorithm\n    pass`,
-      java:       `class Solution {\n    public int maxSubArray(int[] nums) {\n        // Kadane's Algorithm\n        return 0;\n    }\n}`,
-      cpp:        `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxSubArray(vector<int>& nums) {\n        // Kadane's Algorithm\n        return 0;\n    }\n};`,
+      python: `from typing import List\n\ndef max_sub_array(nums: List[int]) -> int:\n    # Kadane's Algorithm\n    pass`,
+      java: `class Solution {\n    public int maxSubArray(int[] nums) {\n        // Kadane's Algorithm\n        return 0;\n    }\n}`,
+      cpp: `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxSubArray(vector<int>& nums) {\n        // Kadane's Algorithm\n        return 0;\n    }\n};`,
     },
   },
   {
     id: 'binary-search', title: 'Binary Search', difficulty: 'Easy', category: 'Binary Search',
     description: 'Given a sorted array of integers nums and an integer target, return the index if target exists, otherwise return -1.\n\nYou must write an O(log n) algorithm.',
     examples: [
-      { input: 'nums = [-1,0,3,5,9,12], target = 9', output: '4',  explanation: '9 exists at index 4.' },
+      { input: 'nums = [-1,0,3,5,9,12], target = 9', output: '4', explanation: '9 exists at index 4.' },
       { input: 'nums = [-1,0,3,5,9,12], target = 2', output: '-1', explanation: '2 does not exist.' },
     ],
     testCases: [
@@ -321,9 +387,9 @@ const PROBLEMS = [
     code: {
       javascript: `function search(nums, target) {\n  // O(log n) solution\n}`,
       typescript: `function search(nums: number[], target: number): number {\n  // O(log n) solution\n  return -1;\n}`,
-      python:     `from typing import List\n\ndef search(nums: List[int], target: int) -> int:\n    # O(log n) solution\n    pass`,
-      java:       `class Solution {\n    public int search(int[] nums, int target) {\n        // O(log n) solution\n        return -1;\n    }\n}`,
-      cpp:        `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n        // O(log n) solution\n        return -1;\n    }\n};`,
+      python: `from typing import List\n\ndef search(nums: List[int], target: int) -> int:\n    # O(log n) solution\n    pass`,
+      java: `class Solution {\n    public int search(int[] nums, int target) {\n        // O(log n) solution\n        return -1;\n    }\n}`,
+      cpp: `#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n        // O(log n) solution\n        return -1;\n    }\n};`,
     },
   },
 ];
@@ -333,11 +399,11 @@ const DIFF_COLORS = { Easy: '#22c55e', Medium: '#f59e0b', Hard: '#ef4444' };
 /* ── Universal Evaluation Engine ── */
 const PISTON_RUNTIME = {
   python: { language: 'python', version: '3.10.0' },
-  java:   { language: 'java',   version: '15.0.2' },
-  cpp:    { language: 'c++',    version: '10.2.0' },
+  java: { language: 'java', version: '15.0.2' },
+  cpp: { language: 'c++', version: '10.2.0' },
 };
-const JS_FN  = { 'two-sum':'twoSum','valid-palindrome':'isPalindrome','climbing-stairs':'climbStairs','max-subarray':'maxSubArray','binary-search':'search','reverse-linked-list':'reverseList' };
-const PY_FN  = { 'two-sum':'two_sum','valid-palindrome':'is_palindrome','climbing-stairs':'climb_stairs','max-subarray':'max_sub_array','binary-search':'search','reverse-linked-list':'reverse_list' };
+const JS_FN = { 'two-sum': 'twoSum', 'valid-palindrome': 'isPalindrome', 'climbing-stairs': 'climbStairs', 'max-subarray': 'maxSubArray', 'binary-search': 'search', 'reverse-linked-list': 'reverseList' };
+const PY_FN = { 'two-sum': 'two_sum', 'valid-palindrome': 'is_palindrome', 'climbing-stairs': 'climb_stairs', 'max-subarray': 'max_sub_array', 'binary-search': 'search', 'reverse-linked-list': 'reverse_list' };
 
 const deepEqual = (a, b) => {
   if (a === undefined || a === null) return false;
@@ -372,6 +438,51 @@ const toBooleanVerdict = (value) => {
   return Boolean(value);
 };
 
+const getErrorMessage = (error) => {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === 'string' && error.trim()) return error;
+  if (error && typeof error === 'object' && typeof error.message === 'string' && error.message.trim()) {
+    return error.message;
+  }
+  return 'Unknown runtime error';
+};
+
+const safeStringify = (value) => {
+  const seen = new WeakSet();
+
+  try {
+    const serialized = JSON.stringify(value, (_, currentValue) => {
+      if (typeof currentValue === 'bigint') return `${currentValue.toString()}n`;
+      if (typeof currentValue === 'function') return `[Function ${currentValue.name || 'anonymous'}]`;
+      if (typeof currentValue === 'symbol') return currentValue.toString();
+
+      if (currentValue && typeof currentValue === 'object') {
+        if (seen.has(currentValue)) return '[Circular]';
+        seen.add(currentValue);
+      }
+
+      return currentValue;
+    });
+
+    return serialized === undefined ? String(value) : serialized;
+  } catch {
+    try {
+      return String(value);
+    } catch {
+      return '[Unserializable value]';
+    }
+  }
+};
+
+const buildUnexpectedFailureCases = (testCases, message) => testCases.map((tc, i) => ({
+  num: i + 1,
+  passed: false,
+  error: message,
+  input: tc.input,
+  expected: tc.expected,
+  actual: undefined,
+}));
+
 const buildBoilerplateFailureCases = (testCases) => testCases.map((tc, i) => ({
   num: i + 1,
   passed: false,
@@ -403,7 +514,7 @@ const transpileTypeScriptCode = (sourceCode) => {
 /* JS/TS: run instantly in browser sandbox */
 const runInBrowserSandbox = (langValue, userCode, problemId, testCases) => {
   const fnName = JS_FN[problemId];
-  if (!fnName) return testCases.map((tc, i) => ({ num:i+1, passed:false, error:'Problem not found.', input:tc.input, expected:tc.expected }));
+  if (!fnName) return testCases.map((tc, i) => ({ num: i + 1, passed: false, error: 'Problem not found.', input: tc.input, expected: tc.expected }));
   let executableCode = userCode;
 
   if (langValue === 'typescript') {
@@ -426,15 +537,15 @@ const runInBrowserSandbox = (langValue, userCode, problemId, testCases) => {
     userFn = new Function(`${executableCode}\nreturn typeof ${fnName}!=='undefined'?${fnName}:null;`)();
     if (typeof userFn !== 'function') throw new Error(`Function '${fnName}' is not defined.`);
   } catch (err) {
-    return testCases.map((tc,i) => ({ num:i+1, passed:false, error:`Compile Error: ${err.message}`, input:tc.input, expected:tc.expected, actual:undefined }));
+    return testCases.map((tc, i) => ({ num: i + 1, passed: false, error: `Compile Error: ${err.message}`, input: tc.input, expected: tc.expected, actual: undefined }));
   }
   return testCases.map((tc, idx) => {
     try {
       const actual = userFn(...JSON.parse(JSON.stringify(tc.input)));
-      if (actual === undefined) return { num:idx+1, passed:false, error:'Function returned undefined — did you forget a return statement?', input:tc.input, expected:tc.expected, actual:undefined };
-      return { num:idx+1, input:tc.input, expected:tc.expected, actual, passed:deepEqual(actual, tc.expected) };
+      if (actual === undefined) return { num: idx + 1, passed: false, error: 'Function returned undefined — did you forget a return statement?', input: tc.input, expected: tc.expected, actual: undefined };
+      return { num: idx + 1, input: tc.input, expected: tc.expected, actual, passed: deepEqual(actual, tc.expected) };
     } catch (e) {
-      return { num:idx+1, passed:false, error:`Runtime Error: ${e.message}`, input:tc.input, expected:tc.expected, actual:undefined };
+      return { num: idx + 1, passed: false, error: `Runtime Error: ${getErrorMessage(e)}`, input: tc.input, expected: tc.expected, actual: undefined };
     }
   });
 };
@@ -456,13 +567,13 @@ def _toA(n):
     return r
 ` : '';
   const call = isLL ? `_toA(${fn}(_toL(__inp__[0])))` : `${fn}(*__inp__)`;
-  const tdata = JSON.stringify(testCases.map(tc => ({ input:tc.input, expected:tc.expected })));
+  const tdata = JSON.stringify(testCases.map(tc => ({ input: tc.input, expected: tc.expected })));
   return `import json
 ${llDef}
 # -- User Solution --
 ${userCode}
 # -------------------
-__T__=json.loads('${tdata.replace(/'/g,"\\'")}')
+__T__=json.loads('${tdata.replace(/'/g, "\\'")}')
 __R__=[]
 for __i__,__tc__ in enumerate(__T__):
     try:
@@ -485,32 +596,32 @@ const buildJavaRunner = (problemId, userCode, testCases) => {
     let call = '', eq = '', act = '';
     if (problemId === 'two-sum') {
       call = `int[] r=sol.twoSum(${arr(tc.input[0])},${tc.input[1]});`;
-      eq   = `java.util.Arrays.equals(r,${arr(tc.expected)})`;
-      act  = `java.util.Arrays.toString(r).replaceAll(" ","")`;
+      eq = `java.util.Arrays.equals(r,${arr(tc.expected)})`;
+      act = `java.util.Arrays.toString(r).replaceAll(" ","")`;
     } else if (problemId === 'valid-palindrome') {
       call = `boolean r=sol.isPalindrome(${JSON.stringify(tc.input[0])});`;
-      eq   = `r==${tc.expected}`; act = `String.valueOf(r)`;
+      eq = `r==${tc.expected}`; act = `String.valueOf(r)`;
     } else if (problemId === 'climbing-stairs') {
       call = `int r=sol.climbStairs(${tc.input[0]});`;
-      eq   = `r==${tc.expected}`; act = `String.valueOf(r)`;
+      eq = `r==${tc.expected}`; act = `String.valueOf(r)`;
     } else if (problemId === 'max-subarray') {
       call = `int r=sol.maxSubArray(${arr(tc.input[0])});`;
-      eq   = `r==${tc.expected}`; act = `String.valueOf(r)`;
+      eq = `r==${tc.expected}`; act = `String.valueOf(r)`;
     } else if (problemId === 'binary-search') {
       call = `int r=sol.search(${arr(tc.input[0])},${tc.input[1]});`;
-      eq   = `r==${tc.expected}`; act = `String.valueOf(r)`;
+      eq = `r==${tc.expected}`; act = `String.valueOf(r)`;
     } else if (problemId === 'reverse-linked-list') {
       call = `ListNode r=sol.reverseList(toList(${arr(tc.input[0])}));int[] out=toArray(r);`;
-      eq   = `java.util.Arrays.equals(out,${arr(tc.expected)})`;
-      act  = `java.util.Arrays.toString(out).replaceAll(" ","")`;
+      eq = `java.util.Arrays.equals(out,${arr(tc.expected)})`;
+      act = `java.util.Arrays.toString(out).replaceAll(" ","")`;
     } else {
       return `        if(!first)sb.append(",");first=false;
         sb.append("{\\"num\\":${n},\\"passed\\":false,\\"error\\":\\"Linked list not supported in Java runner\\"}");`;
     }
     return `        if(!first)sb.append(",");first=false;
         try{${call}boolean p=${eq};String a=${act};
-            sb.append("{\\"num\\":${n},\\"passed\\":"+p+",\\"actual\\":\\"\"+(a)+"\\",\\"expected\\":\\"${JSON.stringify(tc.expected).replace(/"/g,"'")}\\"}");
-        }catch(Exception e){sb.append("{\\"num\\":${n},\\"passed\\":false,\\"error\\":\\""+e.getMessage()+("\\"}"));}` ;
+            sb.append("{\\"num\\":${n},\\"passed\\":"+p+",\\"actual\\":\\"\"+(a)+"\\",\\"expected\\":\\"${JSON.stringify(tc.expected).replace(/"/g, "'")}\\"}");
+        }catch(Exception e){sb.append("{\\"num\\":${n},\\"passed\\":false,\\"error\\":\\""+e.getMessage()+("\\"}"));}`;
   }).join('\n');
   const llPrelude = isLL
     ? `class ListNode {\n  int val;\n  ListNode next;\n  ListNode() {}\n  ListNode(int v) { this.val = v; }\n  ListNode(int v, ListNode n) { this.val = v; this.next = n; }\n}`
@@ -603,7 +714,7 @@ const parseRunnerOutput = (stdout, stderr, testCases) => {
     }));
   } catch (_) {
     const errMsg = stderr?.trim() || stdout?.trim() || 'No output received';
-    return testCases.map((tc, i) => ({ num: i+1, passed: false, error: errMsg.slice(0, 200), input: tc.input, expected: tc.expected, actual: undefined }));
+    return testCases.map((tc, i) => ({ num: i + 1, passed: false, error: errMsg.slice(0, 200), input: tc.input, expected: tc.expected, actual: undefined }));
   }
 };
 
@@ -619,15 +730,15 @@ const evaluateCode = async (langValue, problem, userCode) => {
     return { cases: runInBrowserSandbox(langValue, userCode, problemId, testCases), runtime: null };
   }
   const rt = PISTON_RUNTIME[langValue];
-  if (!rt) return { cases: testCases.map((tc, i) => ({ num:i+1, passed:false, error:`${langValue} is not supported.`, input:tc.input, expected:tc.expected })), runtime: null };
+  if (!rt) return { cases: testCases.map((tc, i) => ({ num: i + 1, passed: false, error: `${langValue} is not supported.`, input: tc.input, expected: tc.expected })), runtime: null };
   let code, filename;
-  if (langValue === 'python')  { code = buildPythonRunner(problemId, userCode, testCases); filename = 'solution.py'; }
-  else if (langValue === 'java') { code = buildJavaRunner(problemId, userCode, testCases);  filename = 'Main.java'; }
-  else if (langValue === 'cpp')  { code = buildCppRunner(problemId, userCode, testCases);   filename = 'main.cpp'; }
+  if (langValue === 'python') { code = buildPythonRunner(problemId, userCode, testCases); filename = 'solution.py'; }
+  else if (langValue === 'java') { code = buildJavaRunner(problemId, userCode, testCases); filename = 'Main.java'; }
+  else if (langValue === 'cpp') { code = buildCppRunner(problemId, userCode, testCases); filename = 'main.cpp'; }
   const result = await callPiston(rt.language, rt.version, code, filename);
   const compileErr = result.compile?.stderr;
-  if (compileErr) return { cases: testCases.map((tc, i) => ({ num:i+1, passed:false, error:`Compile Error: ${compileErr.slice(0,300)}`, input:tc.input, expected:tc.expected, actual:undefined })), runtime: null };
-  const runtime = result.run?.time ? `${Math.round(result.run.time*1000)} ms` : null;
+  if (compileErr) return { cases: testCases.map((tc, i) => ({ num: i + 1, passed: false, error: `Compile Error: ${compileErr.slice(0, 300)}`, input: tc.input, expected: tc.expected, actual: undefined })), runtime: null };
+  const runtime = result.run?.time ? `${Math.round(result.run.time * 1000)} ms` : null;
   return { cases: parseRunnerOutput(result.run?.stdout, result.run?.stderr, testCases), runtime };
 };
 
@@ -682,11 +793,11 @@ export default function Assessments({ theme = 'dark' }) {
   );
 
   // Quiz state
-  const [current, setCurrent]   = useState(persistedQuizDraft?.current ?? 0);
+  const [current, setCurrent] = useState(persistedQuizDraft?.current ?? 0);
   const [selected, setSelected] = useState(persistedQuizDraft?.selected ?? null);
   const [submitted, setSubmitted] = useState(persistedQuizDraft?.submitted ?? false);
-  const [score, setScore]       = useState(persistedQuizDraft?.score ?? 0);
-  const [answers, setAnswers]   = useState(Array.isArray(persistedQuizDraft?.answers) ? persistedQuizDraft.answers : []);
+  const [score, setScore] = useState(persistedQuizDraft?.score ?? 0);
+  const [answers, setAnswers] = useState(Array.isArray(persistedQuizDraft?.answers) ? persistedQuizDraft.answers : []);
   const [quizDone, setQuizDone] = useState(persistedQuizDraft?.quizDone ?? false);
   const [quizSaved, setQuizSaved] = useState(persistedQuizDraft?.quizSaved ?? false);
   const [quizCoaching, setQuizCoaching] = useState(null);
@@ -703,17 +814,34 @@ export default function Assessments({ theme = 'dark' }) {
   );
 
   const [language, setLanguage] = useState(initialLanguage);
-  const [problem, setProblem]   = useState(initialProblem);
-  const [code, setCode]         = useState(
+  const [problem, setProblem] = useState(initialProblem);
+  const [code, setCode] = useState(
     persistedCodeDraft?.code || initialProblem.code[initialLanguage.value]
   );
-  const [output, setOutput]     = useState(null);
+  const [output, setOutput] = useState(null);
   const [executingAction, setExecutingAction] = useState(null); // 'run', 'submit', or null
   const [submitResult, setSubmitResult] = useState(null);
   const [activeTestCase, setActiveTestCase] = useState(0);
   const [isTestPanelOpen, setIsTestPanelOpen] = useState(false);
   const [solvedProblems, setSolvedProblems] = useState([]);
   const isProcessingRef = React.useRef(false);
+
+  const handleEditorWillMount = (monacoInstance) => {
+    if (theme !== 'light') {
+      applyLearnpathTheme(monacoInstance);
+    }
+  };
+
+  const handleEditorDidMount = (editorInstance, monacoInstance) => {
+    if (theme !== 'light') {
+      applyLearnpathTheme(monacoInstance);
+    }
+
+    const model = editorInstance.getModel();
+    if (model && language?.monaco) {
+      monacoInstance.editor.setModelLanguage(model, language.monaco);
+    }
+  };
 
   const q = quizQuestions[current] || quizQuestions[0];
   const hasExecutionResult = Boolean(output || submitResult || executingAction);
@@ -821,6 +949,13 @@ export default function Assessments({ theme = 'dark' }) {
     setIsTestPanelOpen(false);
   };
 
+  const handleResetCode = () => {
+    setCode(problem.code[language.value] || '');
+    setOutput(null);
+    setSubmitResult(null);
+    setIsTestPanelOpen(false);
+  };
+
   const handleRun = async (e) => {
     if (e) { e.preventDefault(); e.stopPropagation(); }
     if (isProcessingRef.current || executingAction) return;
@@ -829,12 +964,15 @@ export default function Assessments({ theme = 'dark' }) {
     setSubmitResult(null); setOutput(null);
     setIsTestPanelOpen(true); setActiveTestCase(0);
     try {
-      const { cases: runCases, runtime } = await evaluateCode(language.value, problem, code);
+      const { cases: evaluatedCases, runtime } = await evaluateCode(language.value, problem, code);
+      const runCases = Array.isArray(evaluatedCases)
+        ? evaluatedCases
+        : buildUnexpectedFailureCases(problem.testCases, 'Runner error: invalid testcase output.');
       const allPassed = runCases.every(c => c.passed);
       setOutput({ testCases: runCases, runtime: runtime || (allPassed ? '8 ms' : 'N/A'), type: 'run', status: allPassed ? 'Accepted' : 'Wrong Answer' });
     } catch (err) {
       console.error('Run error:', err);
-      setOutput({ error: `Evaluation failed: ${err.message}`, type: 'run', status: 'Runtime Error' });
+      setOutput({ error: `Evaluation failed: ${getErrorMessage(err)}`, type: 'run', status: 'Runtime Error' });
     } finally { setExecutingAction(null); isProcessingRef.current = false; }
   };
 
@@ -846,11 +984,14 @@ export default function Assessments({ theme = 'dark' }) {
     setSubmitResult(null); setOutput(null);
     setIsTestPanelOpen(true); setActiveTestCase(0);
     try {
-      const { cases: submitCases, runtime } = await evaluateCode(language.value, problem, code);
+      const { cases: evaluatedCases, runtime } = await evaluateCode(language.value, problem, code);
+      const submitCases = Array.isArray(evaluatedCases)
+        ? evaluatedCases
+        : buildUnexpectedFailureCases(problem.testCases, 'Runner error: invalid testcase output.');
       const allPassed = submitCases.every(c => c.passed);
       const displayRuntime = runtime || (allPassed ? '38 ms' : 'N/A');
-      const displayMemory  = allPassed ? '38.4 MB' : 'N/A';
-      const displayBeats   = allPassed ? '92%' : '0%';
+      const displayMemory = allPassed ? '38.4 MB' : 'N/A';
+      const displayBeats = allPassed ? '92%' : '0%';
 
       if (isSignedIn) {
         const token = await getToken();
@@ -872,7 +1013,7 @@ export default function Assessments({ theme = 'dark' }) {
       }
     } catch (err) {
       console.error('Submission error:', err);
-      setSubmitResult({ status: 'Error', error: `Evaluation failed: ${err.message}`, type: 'submit' });
+      setSubmitResult({ status: 'Error', error: `Evaluation failed: ${getErrorMessage(err)}`, type: 'submit' });
     } finally { setExecutingAction(null); isProcessingRef.current = false; }
   };
 
@@ -916,7 +1057,7 @@ export default function Assessments({ theme = 'dark' }) {
         </div>
       </div>
 
-      
+
       {activeTab === 'quiz' && (
         <div className="quiz-wrapper">
           {quizDone ? (
@@ -929,7 +1070,7 @@ export default function Assessments({ theme = 'dark' }) {
                 {score === quizQuestions.length ? 'Perfect Score!' : score >= quizQuestions.length / 2 ? 'Good Job!' : 'Keep Practicing!'}
               </h2>
               <p style={{ color: '#9ca3af' }}>You answered {score} out of {quizQuestions.length} correctly.</p>
-              {quizSaved  && <p style={{ color: '#22c55e', fontSize: '0.9rem' }}>Saved to your profile</p>}
+              {quizSaved && <p style={{ color: '#22c55e', fontSize: '0.9rem' }}>Saved to your profile</p>}
               {!isSignedIn && <p style={{ color: '#f59e0b', fontSize: '0.9rem' }}>Sign in to save your results</p>}
               {renderCoachingPanel(quizCoaching)}
               <button className="btn-primary" onClick={resetQuiz} style={{ marginTop: '1rem' }}>Retry Quiz</button>
@@ -952,13 +1093,13 @@ export default function Assessments({ theme = 'dark' }) {
                     if (selected === i) cls += ' selected';
                     if (submitted && i === q.correct) cls += ' correct';
                     if (submitted && selected === i && i !== q.correct) cls += ' wrong';
-                    
+
                     const optionStyle = {};
                     if (selected === i) {
                       optionStyle.borderColor = DIFF_COLORS[q.difficulty];
                       optionStyle.boxShadow = `0 0 16px ${DIFF_COLORS[q.difficulty]}40, inset 0 0 0 1px ${DIFF_COLORS[q.difficulty]}`;
                     }
-                    
+
                     return (
                       <button key={i} className={cls} onClick={() => handleOptionSelect(i)} style={optionStyle}>
                         <span className="opt-letter">{String.fromCharCode(65 + i)}</span>
@@ -1028,9 +1169,19 @@ export default function Assessments({ theme = 'dark' }) {
                 <span className="brand-icon">&lt;/&gt;</span> <span className="brand-text">Code</span>
               </div>
               <div className="editor-topbar">
-                <select className="lang-select" value={language.value} onChange={handleLanguageChange}>
-                  {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-                </select>
+                <div className="editor-controls">
+                  <select className="lang-select" value={language.value} onChange={handleLanguageChange}>
+                    {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn-reset code-action-reset"
+                    onClick={handleResetCode}
+                    disabled={executingAction === 'run' || executingAction === 'submit'}
+                  >
+                    Reset
+                  </button>
+                </div>
                 <div className="editor-btns">
                   <button
                     key="code-run-btn"
@@ -1039,7 +1190,7 @@ export default function Assessments({ theme = 'dark' }) {
                     onClick={handleRun}
                     disabled={executingAction === 'run'}
                   >
-                    <span className="icon" style={{marginRight:'6px'}}>▷</span> {executingAction === 'run' ? 'Running' : 'Run'}
+                    <span className="icon" style={{ marginRight: '6px' }}>▷</span> {executingAction === 'run' ? 'Running' : 'Run'}
                   </button>
                   <button
                     key="code-submit-btn"
@@ -1048,22 +1199,24 @@ export default function Assessments({ theme = 'dark' }) {
                     onClick={handleSubmit}
                     disabled={executingAction === 'submit'}
                   >
-                    <span className="icon" style={{marginRight:'6px'}}>↗</span> {executingAction === 'submit' ? 'Submitting' : 'Submit'}
+                    <span className="icon" style={{ marginRight: '6px' }}>↗</span> {executingAction === 'submit' ? 'Submitting' : 'Submit'}
                   </button>
                 </div>
               </div>
-              
+
               <div className="editor-inner-wrapper">
                 <Editor
                   height="100%"
                   language={language.monaco}
                   theme={theme === 'light' ? 'light' : 'learnpath-dark'}
                   value={code}
-                  onChange={(val) => setCode(val)}
-                  options={{ fontSize: 13, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 12 }, contextmenu: false, renderLineHighlight: 'none' }}
+                  beforeMount={handleEditorWillMount}
+                  onMount={handleEditorDidMount}
+                  onChange={(val) => setCode(val ?? '')}
+                  options={{ fontSize: 16, minimap: { enabled: false }, scrollBeyondLastLine: false, padding: { top: 12 }, contextmenu: false, renderLineHighlight: 'none', semanticHighlighting: false }}
                 />
               </div>
-              
+
               <div className="editor-statusbar">
                 <button
                   type="button"
@@ -1107,12 +1260,12 @@ export default function Assessments({ theme = 'dark' }) {
                 <div className={`code-output console-panel code-output-dropup ${isTestPanelOpen ? 'open' : ''}`}>
                   <div className="console-header-tabs">
                     <div className="console-tab active">
-                      <span className="tc-icon" style={{color: '#22c55e', marginRight: '5px'}}>☑</span> Testcase
+                      <span className="tc-icon" style={{ color: '#22c55e', marginRight: '5px' }}>☑</span> Testcase
                     </div>
                     <div className="console-tab">
-                      <span className="tc-icon" style={{color: '#6366f1', marginRight: '5px'}}>&gt;_</span> Test Result
+                      <span className="tc-icon" style={{ color: '#6366f1', marginRight: '5px' }}>&gt;_</span> Test Result
                     </div>
-                    <button 
+                    <button
                       className="console-collapse-btn"
                       onClick={() => setIsTestPanelOpen(false)}
                       title="Collapse"
@@ -1122,103 +1275,103 @@ export default function Assessments({ theme = 'dark' }) {
                   </div>
 
                   <div className="custom-term-output">
-                  {!hasPanelData ? (
-                    <div className="tc-empty-state">
-                      <h3 className="tc-status-text" style={{ color: '#cbd5e1' }}>No test results yet</h3>
-                      <p style={{ color: '#94a3b8' }}>Click Run or Submit to open testcase details.</p>
-                    </div>
-                  ) : executingAction ? (
-                    <div className="tc-status-row">
-                      <h3 className="tc-status-text" style={{ color: '#60a5fa' }}>
-                        {executingAction === 'run' ? 'Running test cases...' : 'Submitting solution...'}
-                      </h3>
-                      <p style={{ color: '#94a3b8' }}>Please wait while we evaluate your code.</p>
-                    </div>
-                  ) : resData?.error ? (
-                    <div className="tc-status-row">
-                      <h3 className="tc-status-text" style={{ color: '#ef4444' }}>Compile/Runtime Error</h3>
-                      <p style={{ color: '#f87171' }}>{resData.error}</p>
-                    </div>
-                  ) : (
-                    <>
+                    {!hasPanelData ? (
+                      <div className="tc-empty-state">
+                        <h3 className="tc-status-text" style={{ color: '#cbd5e1' }}>No test results yet</h3>
+                        <p style={{ color: '#94a3b8' }}>Click Run or Submit to open testcase details.</p>
+                      </div>
+                    ) : executingAction ? (
                       <div className="tc-status-row">
-                        <div className="status-main">
-                          <h3 className={`tc-status-text ${isAccepted ? 'accepted' : 'failed'}`}>
-                            {statusLabel}
-                          </h3>
-                          <span className="tc-runtime">Runtime: {resData.runtime || 'N/A'}</span>
+                        <h3 className="tc-status-text" style={{ color: '#60a5fa' }}>
+                          {executingAction === 'run' ? 'Running test cases...' : 'Submitting solution...'}
+                        </h3>
+                        <p style={{ color: '#94a3b8' }}>Please wait while we evaluate your code.</p>
+                      </div>
+                    ) : resData?.error ? (
+                      <div className="tc-status-row">
+                        <h3 className="tc-status-text" style={{ color: '#ef4444' }}>Compile/Runtime Error</h3>
+                        <p style={{ color: '#f87171' }}>{resData.error}</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="tc-status-row">
+                          <div className="status-main">
+                            <h3 className={`tc-status-text ${isAccepted ? 'accepted' : 'failed'}`}>
+                              {statusLabel}
+                            </h3>
+                            <span className="tc-runtime">Runtime: {resData.runtime || 'N/A'}</span>
+                          </div>
+                          {totalCount > 0 && (
+                            <div className={`tc-passed-pill ${isAccepted ? 'all-passed' : 'some-failed'}`}>
+                              {passedCount}/{totalCount} Passed test cases
+                            </div>
+                          )}
                         </div>
+
                         {totalCount > 0 && (
-                          <div className={`tc-passed-pill ${isAccepted ? 'all-passed' : 'some-failed'}`}>
-                            {passedCount}/{totalCount} Passed test cases
+                          <div className="tc-cases-row">
+                            {tcs.map((tc, idx) => (
+                              <button
+                                key={idx}
+                                className={`tc-case-btn ${activeTestCase === idx ? 'active' : ''}`}
+                                onClick={() => setActiveTestCase(idx)}
+                              >
+                                <span className="tc-case-icon" style={{ color: tc.passed ? '#22c55e' : '#ef4444' }}>
+                                  {tc.passed ? '✓' : '✗'}
+                                </span>
+                                Case {tc.num}
+                              </button>
+                            ))}
                           </div>
                         )}
-                      </div>
 
-                      {totalCount > 0 && (
-                        <div className="tc-cases-row">
-                          {tcs.map((tc, idx) => (
-                            <button 
-                              key={idx} 
-                              className={`tc-case-btn ${activeTestCase === idx ? 'active' : ''}`}
-                              onClick={() => setActiveTestCase(idx)}
-                            >
-                              <span className="tc-case-icon" style={{ color: tc.passed ? '#22c55e' : '#ef4444' }}>
-                                {tc.passed ? '✓' : '✗'}
-                              </span>
-                              Case {tc.num}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {totalCount > 0 && tcs[activeTestCase] && (
-                        <div className="tc-detail-box animate-fade-in">
-                          <div className="tc-detail-section">
-                            <span className="tc-detail-label">Input</span>
-                            <div className="tc-detail-val">
-                               <div className="tc-val-text code-font">
-                                 {JSON.stringify(tcs[activeTestCase].input)}
-                               </div>
-                            </div>
-                          </div>
-                          
-                          <div className="tc-detail-section">
-                            <span className="tc-detail-label">Output</span>
-                            <div className="tc-detail-val">
-                               <div className="tc-val-text code-font" style={{ color: tcs[activeTestCase].passed ? '#22c55e' : '#ef4444' }}>
-                                 {tcs[activeTestCase].error ? `Error: ${tcs[activeTestCase].error}` : JSON.stringify(tcs[activeTestCase].actual)}
-                               </div>
-                            </div>
-                          </div>
-
-                          {!tcs[activeTestCase].passed && tcs[activeTestCase].expected !== undefined && (
+                        {totalCount > 0 && tcs[activeTestCase] && (
+                          <div className="tc-detail-box animate-fade-in">
                             <div className="tc-detail-section">
-                              <span className="tc-detail-label">Expected</span>
+                              <span className="tc-detail-label">Input</span>
                               <div className="tc-detail-val">
-                                 <div className="tc-val-text code-font">
-                                   {JSON.stringify(tcs[activeTestCase].expected)}
-                                 </div>
+                                <div className="tc-val-text code-font">
+                                  {safeStringify(tcs[activeTestCase].input)}
+                                </div>
                               </div>
                             </div>
-                          )}
-                        </div>
-                      )}
 
-                      {isSubmit && isAccepted && (
-                        <div className="sr-stats">
-                          <span>Runtime: <strong style={{color: 'white'}}>{resData.runtime}</strong></span>
-                          <span>Memory: <strong style={{color: 'white'}}>{resData.memory}</strong></span>
-                          <span>Beats: <strong style={{color: 'white'}}>{resData.beats}</strong></span>
-                          {resData.saved !== undefined && (
-                            <span style={{color: '#22c55e'}}>{resData.saved ? 'Saved to profile' : ''}</span>
-                          )}
-                        </div>
-                      )}
+                            <div className="tc-detail-section">
+                              <span className="tc-detail-label">Output</span>
+                              <div className="tc-detail-val">
+                                <div className="tc-val-text code-font" style={{ color: tcs[activeTestCase].passed ? '#22c55e' : '#ef4444' }}>
+                                  {tcs[activeTestCase].error ? `Error: ${tcs[activeTestCase].error}` : safeStringify(tcs[activeTestCase].actual)}
+                                </div>
+                              </div>
+                            </div>
 
-                      {isSubmit && isAccepted && renderCoachingPanel(resData.coaching)}
-                    </>
-                  )}
+                            {!tcs[activeTestCase].passed && tcs[activeTestCase].expected !== undefined && (
+                              <div className="tc-detail-section">
+                                <span className="tc-detail-label">Expected</span>
+                                <div className="tc-detail-val">
+                                  <div className="tc-val-text code-font">
+                                    {safeStringify(tcs[activeTestCase].expected)}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {isSubmit && isAccepted && (
+                          <div className="sr-stats">
+                            <span>Runtime: <strong style={{ color: 'white' }}>{resData.runtime}</strong></span>
+                            <span>Memory: <strong style={{ color: 'white' }}>{resData.memory}</strong></span>
+                            <span>Beats: <strong style={{ color: 'white' }}>{resData.beats}</strong></span>
+                            {resData.saved !== undefined && (
+                              <span style={{ color: '#22c55e' }}>{resData.saved ? 'Saved to profile' : ''}</span>
+                            )}
+                          </div>
+                        )}
+
+                        {isSubmit && isAccepted && renderCoachingPanel(resData.coaching)}
+                      </>
+                    )}
                   </div>
                 </div>
               );

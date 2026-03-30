@@ -523,6 +523,12 @@
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
+.editor-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
 .lang-select {
   background: #1a1a1a;
   color: #d1d5db;
@@ -557,6 +563,30 @@
   flex-direction: row;
   align-items: center;
   gap: 0.65rem;
+}
+
+.btn-reset.code-action-reset {
+  background: #1b2130 !important;
+  color: #dbeafe !important;
+  border: 1px solid rgba(147, 197, 253, 0.45) !important;
+  border-radius: 8px !important;
+  padding: 0.46rem 0.9rem !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  line-height: 1.1;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-reset.code-action-reset:hover:not(:disabled),
+.btn-reset.code-action-reset:focus:not(:disabled) {
+  background: #23304a !important;
+  border-color: rgba(147, 197, 253, 0.75) !important;
+}
+
+.btn-reset.code-action-reset:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* Modern LeetCode Style Buttons */
@@ -1165,6 +1195,15 @@
     flex-wrap: wrap;
   }
 
+  .editor-controls {
+    width: 100%;
+  }
+
+  .editor-controls .lang-select,
+  .editor-controls .btn-reset.code-action-reset {
+    flex: 1;
+  }
+
   .editor-btns {
     width: 100%;
     margin-top: 0.5rem;
@@ -1243,6 +1282,11 @@
 
   .editor-btns .btn-run.code-action-run,
   .editor-btns .btn-submit.code-action-submit {
+    padding: 0.4rem 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  .editor-controls .btn-reset.code-action-reset {
     padding: 0.4rem 0.5rem !important;
     font-size: 0.75rem !important;
   }
